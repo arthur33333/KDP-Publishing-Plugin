@@ -1,0 +1,80 @@
+# Book manifest — the single source of this book's identity and print settings.
+#
+# Every script in the plugin reads this file. The title page, the cover and the
+# KDP listing all derive from it, so they cannot disagree.
+#
+# That matters more than it looks: KDP will not let the title field be edited
+# more than 72 hours after publication, and requires it to read exactly as the
+# cover prints it. Get it right here, once.
+
+[book]
+title = "Untitled"
+
+# How the front cover and title page break the title across lines. This is a
+# display decision, not a different title: the scripts refuse to build unless
+# joining these with single spaces reproduces `title` exactly.
+title_lines = ["Untitled"]
+
+subtitle = ""
+author = "Anonymous"
+contributors = []
+
+
+[print]
+# A KDP STANDARD trim size. Standard sizes are available in every marketplace,
+# are the only ones some distribution channels accept, and are what the print
+# cost tables are quoted against. `python3 kdp_geometry.py --list-trims` prints
+# the full table with what each one is for.
+#
+# A non-standard trim still builds — the scripts compute it correctly and warn
+# rather than refuse — but it should be a decision, not a typo.
+trim = "6x9"
+
+# white-bw | cream-bw | standard-colour | premium-colour
+# This sets the spine width, via the per-page caliper. Whatever is chosen here
+# must be selected in the KDP form too, or the spine KDP expects stops matching
+# the cover that was built.
+paper = "cream-bw"
+
+# true only if art runs to the page edge. With bleed the interior FILE is larger
+# than the trim and KDP trims into it; choosing bleed for a text-only book tells
+# KDP to trim 0.125in off content that is not there.
+bleed = false
+
+cover_finish = "matte"
+
+# Fonts the design actually asks for. preflight.py lists what got embedded and
+# flags anything outside this set, which is how a silent font substitution gets
+# caught before the proof copy rather than after it.
+fonts = ["Libertinus"]
+
+
+[paths]
+# The manuscript body. A single .typ file, or a directory of them.
+# THE PLUGIN DOES NOT WRITE THIS. Bring your own manuscript.
+body = "manuscript/body.typ"
+
+interior_template = "templates/interior.typ"
+cover_template = "templates/cover.typ"
+fonts = "assets/fonts"
+description = "listing/description.txt"
+dist = "dist"
+
+
+[listing]
+# Chosen values only. Anything measurable — page count, trim, spine — is read
+# back out of the built PDFs instead, and never typed here.
+language = "English"
+primary_audience = "Adult"
+publishing_rights = "I own the copyright and hold necessary publishing rights"
+isbn = "Free KDP ISBN"
+
+# Up to 3.
+categories = []
+
+# Up to 7. Word order is how people search, so phrase them in that order.
+# No quotation marks: KDP treats a quoted phrase as an exact match and the book
+# stops surfacing for anything less than all of it.
+keywords = []
+
+price_note = "Unverified — check the per-page printing rate against KDP's current table"

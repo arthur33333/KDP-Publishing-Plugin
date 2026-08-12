@@ -1,0 +1,23 @@
+{
+  "name": "kdp-publishing",
+  "version": "1.0.0",
+  "description": "Claude Code plugin: typeset a print-ready Amazon KDP paperback with Typst — trim geometry biased to KDP's US standard sizes, a full-wrap cover built last from the interior's measured extent, mechanical pre-flight, and an upload folder. Production only; it does not write the book.",
+  "author": {
+    "name": "Daniel Rosehill",
+    "email": "public@danielrosehill.com",
+    "url": "https://danielrosehill.com"
+  },
+  "repository": "https://github.com/danielrosehill/KDP-Publishing-Plugin",
+  "license": "MIT",
+  "keywords": [
+    "kdp",
+    "amazon",
+    "self-publishing",
+    "typst",
+    "typesetting",
+    "print-on-demand",
+    "paperback",
+    "book-cover",
+    "prepress"
+  ]
+}
