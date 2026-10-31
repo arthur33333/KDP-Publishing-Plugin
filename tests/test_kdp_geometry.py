@@ -131,7 +131,7 @@ class PdfInfoGeometryTests(unittest.TestCase):
     def setUp(self):
         self.tmp = tempfile.TemporaryDirectory()
         self.pdf = Path(self.tmp.name) / "sample.pdf"
-        self.pdf.write_bytes(b"%PDF-1.4\\n")
+        self.pdf.write_bytes(b"%PDF-1.4\n")
     
     def tearDown(self):
         self.tmp.cleanup()
@@ -142,7 +142,7 @@ class PdfInfoGeometryTests(unittest.TestCase):
         import kdp_project as project
         mocked_run.return_value = SimpleNamespace(
             returncode=0,
-            stdout="Pages:           120\\nPage size:       432 x 648 pts (6 x 9 in)\\n",
+            stdout="Pages:           120\nPage size:       432 x 648 pts (6 x 9 in)\n",
             stderr="",
         )
         self.assertEqual(project.page_geometry(self.pdf), (432.0, 648.0, 120))
