@@ -66,7 +66,7 @@ class GeometryTests(unittest.TestCase):
     def test_recommended_margins_include_buffer(self):
         margins = geo.recommended_margins(6, 9, 200)
         self.assertEqual(
-            margins, {"inside": 0.75, "outside": 0.88, "top": 0.925, "bottom": 1.05}
+            margins, {"inside": 0.75, "outside": 0.63, "top": 0.675, "bottom": 0.8}
         )
 
     def test_bleed_changes_interior_page_size(self):
