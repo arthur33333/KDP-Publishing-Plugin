@@ -28,6 +28,21 @@ template; the second pass derives them from the first pass's measured extent. A
 book sitting exactly on a tier boundary can need a third pass, and the script
 handles that.
 
+## Automatic table of contents
+
+The interior template generates a contents page from Typst headings before the
+manuscript body is typeset. Heading levels 1 and 2 are included, with page
+references linked to the corresponding sections. It is enabled by default and
+can be disabled in `book.toml`:
+
+```toml
+[interior]
+table_of_contents = false
+```
+
+Use Typst heading markup (`= Chapter title`, `== Section title`) in the body
+source; plain bold paragraphs are not structural headings and will not appear.
+
 ## Where the text lives
 
 `[paths].body` in `book.toml`. A single `.typ` file or a directory of them.
