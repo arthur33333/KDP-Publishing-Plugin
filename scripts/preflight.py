@@ -136,7 +136,7 @@ def main() -> int:
     # --- geometry ------------------------------------------------------------
     iw, ih, pages = proj.page_geometry(interior)
     trim_w, trim_h = geo.parse_trim(printing["trim"])
-    expected = geo.interior_geometry(pages, printing["trim"], printing["bleed"])
+    expected = geo.interior_geometry(pages, printing["trim"], printing["bleed"], printing["paper"])
     want_w, want_h = expected["page_size_in"]
 
     say(f"title           {book['title']}")
@@ -160,7 +160,8 @@ def main() -> int:
 
     for problem in geo.validate(pages, printing["trim"], printing["paper"],
                                 printing["bleed"]):
-        if "not a KDP standard trim" in problem or "no spine text" in problem:
+        if ("not a KDP standard trim" in problem or "no spine text" in problem
+                or "page-count limit is not modelled" in problem):
             warnings.append(problem)
         else:
             failures.append(problem)
