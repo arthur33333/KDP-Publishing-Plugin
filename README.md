@@ -11,7 +11,7 @@ pre-flight, and an upload folder.
 ## It does not write your book
 
 This plugin is **production, not authorship**. It takes a manuscript you already
-have and turns it into two PDFs a printer will accept.
+have and turns it into two PDFs prepared against KDP's published technical specifications.
 
 It does not draft chapters, generate blurbs, invent keywords or write your
 description. Nothing in it assumes the text was written by an AI, and nothing in
@@ -29,7 +29,7 @@ The expensive mistakes in print-on-demand are the ones that produce a
 upload. You find out three weeks and one print charge later, when the proof copy
 arrives.
 
-Three of them, all handled here:
+Four of them, all handled here:
 
 **A cover built from a stale page count.** Spine width is page count × paper
 caliper, so a cover built before the interior was finished has a spine that does
