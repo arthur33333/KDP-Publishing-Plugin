@@ -14,7 +14,8 @@ Machine-readable copy: `cover_dimensions()` in `scripts/kdp_geometry.py`.
 - Fonts embedded. Typst does this by default on PDF export.
 - **CMYK.** KDP asks for CMYK and strips embedded colour profiles. Convert a copy
   at upload; keep the source RGB.
-- Raster art at **300 dpi at final size**.
+- Raster art at **300 PPI minimum at final size**. KDP recommends staying at or
+  below 600 PPI to avoid unnecessarily large PDFs.
 
 ## Spine calipers
 
