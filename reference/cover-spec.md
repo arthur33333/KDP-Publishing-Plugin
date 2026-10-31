@@ -1,6 +1,6 @@
 # KDP paperback cover specification
 
-**Verified 2026-08-12** against
+**Verified 2026-10-31** against
 <https://kdp.amazon.com/en_US/help/topic/G201953020> and
 <https://kdp.amazon.com/en_US/help/topic/G201857950>.
 
@@ -15,6 +15,18 @@ Machine-readable copy: `cover_dimensions()` in `scripts/kdp_geometry.py`.
 - **CMYK.** KDP asks for CMYK and strips embedded colour profiles. Convert a copy
   at upload; keep the source RGB.
 - Raster art at **300 dpi at final size**.
+
+## Spine calipers
+
+| Paper | Caliper (in/page) |
+|---|---:|
+| White B&W | 0.002252 |
+| Cream B&W | 0.0025 |
+| Groundwood B&W | 0.00235 |
+| Standard colour | 0.002347 |
+| Premium colour | 0.002347 |
+
+KDP specifies the same caliper for standard and premium colour interiors.
 
 ## Dimensions
 
