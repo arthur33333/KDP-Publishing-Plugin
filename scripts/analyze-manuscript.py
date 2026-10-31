@@ -18,7 +18,7 @@ sys.path.insert(0, str(Path(__file__).resolve().parent))
 import kdp_project as proj  # noqa: E402
 
 HEADING_RE = re.compile(r"^\s*(=+)\s+(.+?)\s*$")
-IMAGE_RE = re.compile(r'\\bimage\\(\\s*"([^"]+)"')
+IMAGE_RE = re.compile(r'\bimage\(\s*"([^"]+)"')
 PLACEHOLDER_RE = re.compile(
     r"\b(?:TODO|FIXME|TBD|TK)\b|lorem\s+ipsum|your\s+text\s+here|"
     r"\[\s*insert\b",
