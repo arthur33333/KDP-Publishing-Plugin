@@ -40,6 +40,7 @@ sys.path.insert(0, str(Path(__file__).resolve().parent))
 
 import kdp_geometry as geo  # noqa: E402
 import kdp_project as proj  # noqa: E402
+import listing_audit  # noqa: E402
 
 # Source extensions worth reading for a codepoint corpus.
 BODY_SUFFIXES = {".typ", ".md", ".txt", ".json", ".yaml", ".yml", ".toml"}
@@ -298,6 +299,18 @@ def main() -> int:
             'an exact match and the book stops surfacing for anything less than all '
             'of it'
         )
+
+    listing_warnings = listing_audit.audit_listing(
+        description.read_text(encoding="utf-8") if description.is_file() else "",
+        keywords,
+        categories,
+    )
+    warnings.extend(listing_warnings)
+    report["listing"] = {
+        "keyword_count": len(keywords),
+        "category_count": len(categories),
+        "audit_warnings": listing_warnings,
+    }
 
     # --- verdict -------------------------------------------------------------
     report["failures"], report["warnings"] = failures, warnings
