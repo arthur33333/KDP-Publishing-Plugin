@@ -89,7 +89,7 @@ def main() -> int:
         # Only meaningful for a no-bleed interior; a bleed interior is legitimately
         # larger than trim, and interior_geometry() knows by how much.
         want_w, want_h = geo.interior_geometry(
-            pages, printing["trim"], printing["bleed"])["page_size_in"]
+            pages, printing["trim"], printing["bleed"], printing["paper"])["page_size_in"]
         if abs(iw / proj.PT - want_w) > 0.03 or abs(ih / proj.PT - want_h) > 0.03:
             print(f"! interior is {iw / proj.PT:.3f} x {ih / proj.PT:.3f}in, not the "
                   f"{want_w} x {want_h}in this book is specified at", file=sys.stderr)
@@ -231,6 +231,7 @@ def main() -> int:
         "white-bw": "Black & white on white paper",
         "cream-bw": "Black & white on cream paper",
         "standard-colour": "Standard colour",
+        "groundwood-bw": "Black & white on groundwood paper",
         "premium-colour": "Premium colour",
     }[printing["paper"]]
 
@@ -296,7 +297,7 @@ Keywords ({len(keywords)} of {geo.KEYWORDS_MAX}):
 """, encoding="utf-8")
 
     margins = geo.interior_geometry(
-        pages, printing["trim"], printing["bleed"])["margins_in"]
+        pages, printing["trim"], printing["bleed"], printing["paper"])["margins_in"]
 
     (out / "README.txt").write_text(f"""KDP UPLOAD — {book['title']}
 {'=' * 68}
