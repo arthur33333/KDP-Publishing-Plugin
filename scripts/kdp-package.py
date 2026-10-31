@@ -93,9 +93,18 @@ def main() -> int:
                   f"{want_w} x {want_h}in this book is specified at", file=sys.stderr)
             return 1
 
-    if pages % 2:
-        print(f"! interior is {pages} pages, odd — build-interior.py pads parity on a "
-              f"second pass, so this file is stale. Rebuild.", file=sys.stderr)
+    geometry_problems = geo.validate(
+        pages, printing["trim"], printing["paper"], printing["bleed"]
+    )
+    blocking_geometry = [
+        problem for problem in geometry_problems
+        if "not a KDP standard trim" not in problem and "no spine text" not in problem
+    ]
+    if blocking_geometry:
+        for problem in blocking_geometry:
+            print(f"! {problem}", file=sys.stderr)
+        print("  rebuild the interior and resolve the print geometry before packaging.",
+              file=sys.stderr)
         return 1
 
     description = description_src.read_text(encoding="utf-8").strip()
@@ -115,7 +124,7 @@ def main() -> int:
         print(f"! {len(categories)} categories; KDP takes {geo.CATEGORIES_MAX}",
               file=sys.stderr)
         return 1
-    if any('"' in k for k in keywords):
+    if any(isinstance(k, str) and '"' in k for k in keywords):
         print("! a keyword contains a quotation mark — KDP treats the quoted phrase "
               "as an exact match and the book stops surfacing for anything less",
               file=sys.stderr)
@@ -125,6 +134,10 @@ def main() -> int:
         description, keywords, categories
     )
 
+    # The package is generated output. Clear it first so an old cover can never
+    # survive a later run in which no valid current cover exists.
+    if out.exists():
+        shutil.rmtree(out)
     out.mkdir(parents=True, exist_ok=True)
     listing_review = [
         f"LISTING REVIEW — {book['title']}",
@@ -159,6 +172,14 @@ def main() -> int:
         if abs(measured - dims["spine_in"]) > 0.01:
             print(f"! cover spine measures {measured:.4f}in but {pages} pages needs "
                   f"{dims['spine_in']:.4f}in — this cover is stale", file=sys.stderr)
+            return 1
+        expected_wrap_height = dims["wrap_in"][1]
+        if abs(ch / proj.PT - expected_wrap_height) > 0.02:
+            print(
+                f"! cover height is {ch / proj.PT:.4f}in but the wrap needs "
+                f"{expected_wrap_height:.4f}in — rebuild the cover",
+                file=sys.stderr,
+            )
             return 1
         if cpages != 1:
             print(f"! cover is {cpages} pages; KDP wants one page carrying back, "
