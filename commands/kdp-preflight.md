@@ -1,5 +1,5 @@
 ---
-description: Run every mechanical check on the built PDFs — trim, parity, gutter, font round-trip, spine against extent
+description: Run every mechanical check on the built PDFs — trim, parity, gutter, image PPI, font round-trip, spine against extent
 ---
 
 Pre-flight the build.
@@ -21,6 +21,11 @@ would catch by eye in a few hundred pages. On another machine with different
 fonts installed, the same source produces a different book. The round-trip check
 — enumerate every codepoint in the source, confirm each survives into the PDF,
 list what actually got embedded — is the only signal that exists.
+
+**Raster image resolution.** Preflight reads effective PPI from the finished
+interior and cover PDFs. Images below 300 PPI fail; images above 600 PPI are
+flagged as a size/performance warning. This measures placed resolution, not just
+the source image file dimensions.
 
 **Report the result honestly.** If checks fail, say which and show the output. Do
 not describe a build as ready when preflight returned non-zero.
