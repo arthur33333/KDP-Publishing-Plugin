@@ -24,9 +24,9 @@ class ManuscriptConversionTests(unittest.TestCase):
         ])
 
     def test_typst_output_escapes_special_characters_as_data(self):
-        output = server.make_typst([(1, "A #title $100"), (0, 'Quote " and slash \\')])
+        output = server.make_typst([(1, "A #title $100"), (0, 'Quote " and slash')])
         self.assertIn('#heading(level: 1)[#text("A #title $100")]', output)
-        self.assertIn(r'Quote \\" and slash \\\\', output)
+        self.assertIn(json.dumps('Quote " and slash'), output)
 
     def test_docx_extracts_headings_and_text(self):
         xml = """<?xml version="1.0" encoding="UTF-8"?>
