@@ -92,6 +92,16 @@ class GeometryTests(unittest.TestCase):
         self.assertEqual(geo.validate(200, "6x9", "cream-bw"), [])
 
 
+class CoverPdfGeometryTests(unittest.TestCase):
+    def test_cover_height_mismatch_is_reported(self):
+        message = preflight.cover_height_mismatch(9.0, 9.25)
+        self.assertIn("cover height is 9.0000in", message)
+        self.assertIn("needs 9.2500in", message)
+
+    def test_cover_height_within_tolerance_passes(self):
+        self.assertIsNone(preflight.cover_height_mismatch(9.251, 9.25))
+
+
 class PreflightCommandTests(unittest.TestCase):
     @patch.object(preflight.subprocess, "run")
     def test_run_returns_stdout_on_success(self, mocked_run):
