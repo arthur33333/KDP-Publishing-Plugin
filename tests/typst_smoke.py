@@ -36,7 +36,7 @@ def png_chunk(kind: bytes, data: bytes) -> bytes:
 
 def write_test_png(path: Path) -> None:
     """Write a tiny valid RGB PNG without adding a Pillow dependency."""
-    width = height = 4
+    width = height = 1200
     rows = b"".join(b"\x00" + bytes((35, 110, 180) * width) for _ in range(height))
     payload = (
         b"\x89PNG\r\n\x1a\n"
@@ -50,7 +50,7 @@ def write_test_png(path: Path) -> None:
 def main() -> int:
     if not shutil.which("typst"):
         raise RuntimeError("Typst is not installed or is not on PATH.")
-    for tool in ("pdfinfo", "pdftotext", "pdffonts"):
+    for tool in ("pdfinfo", "pdftotext", "pdffonts", "pdfimages"):
         if not shutil.which(tool):
             raise RuntimeError(f"{tool} is required for the end-to-end smoke test.")
 
