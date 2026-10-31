@@ -58,7 +58,7 @@ pdfimages -v
 ```
 
 If PowerShell says a command is not recognized, the Poppler `Library\bin`
-folder is not on PATH yet. Do not continue until all three commands work.
+folder is not on PATH yet. Do not continue until all four commands work.
 
 ## 4. Verify the complete environment
 
@@ -70,6 +70,7 @@ typst --version
 pdfinfo -v
 pdftotext -v
 pdffonts -v
+pdfimages -v
 ```
 
 All six commands must respond before running the PDF pipeline.
