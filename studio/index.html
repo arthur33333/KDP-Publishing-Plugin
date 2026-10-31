@@ -1,0 +1,57 @@
+<!doctype html>
+<html lang="fr">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1">
+  <meta name="theme-color" content="#101827">
+  <title>KDP Publishing Studio</title>
+  <link rel="stylesheet" href="/style.css">
+</head>
+<body>
+  <header class="topbar">
+    <div class="brand"><div class="brand-mark">K</div><div><strong>KDP Publishing Studio</strong><small>Production de livres brochés</small></div></div>
+    <div id="system-status" class="status"><span class="dot"></span><span>Vérification des outils…</span></div>
+  </header>
+  <main class="shell">
+    <section class="intro">
+      <div class="eyebrow">ATELIER DE PUBLICATION</div>
+      <h1>Préparez votre livre pour <span>Amazon KDP.</span></h1>
+      <p>Importez votre manuscrit, définissez les caractéristiques d'impression et générez vos fichiers PDF. Vos documents restent sur votre ordinateur.</p>
+    </section>
+    <div class="steps"><div class="step active"><b>01</b><span>Manuscrit</span></div><i></i><div class="step"><b>02</b><span>Impression</span></div><i></i><div class="step"><b>03</b><span>Génération</span></div></div>
+    <form id="book-form" class="panel">
+      <div class="panel-heading"><div><span class="number">01</span><h2>Votre livre</h2></div><p>Les informations utilisées pour la page de titre et la couverture.</p></div>
+      <div class="grid two">
+        <label>Titre du livre<input id="title" required maxlength="180" placeholder="Ex. Le guide du jardinage"></label>
+        <label>Nom de l'auteur<input id="author" required maxlength="120" placeholder="Votre nom ou pseudonyme"></label>
+      </div>
+      <label>Sous-titre <span class="optional">Facultatif</span><input id="subtitle" maxlength="220" placeholder="Une précision sur le contenu du livre"></label>
+      <div class="upload" id="drop-zone">
+        <input id="manuscript" type="file" accept=".docx,.txt,.md" required>
+        <div class="upload-icon">↑</div><div><strong>Choisir votre manuscrit</strong><p>Word (.docx), texte (.txt) ou Markdown (.md), 35 Mo maximum.</p><small id="file-name">Aucun fichier sélectionné</small></div>
+      </div>
+      <div class="panel-heading subhead"><div><span class="number">02</span><h2>Paramètres d'impression</h2></div></div>
+      <div class="grid three">
+        <label>Format du livre<select id="trim">
+          <option value="5x8">5 × 8 pouces</option><option value="5.5x8.5">5,5 × 8,5 pouces</option><option value="6x9" selected>6 × 9 pouces (recommandé)</option><option value="7x10">7 × 10 pouces</option><option value="8x10">8 × 10 pouces</option><option value="8.5x11">8,5 × 11 pouces</option>
+        </select></label>
+        <label>Type de papier<select id="paper"><option value="cream-bw" selected>Crème – noir et blanc</option><option value="white-bw">Blanc – noir et blanc</option><option value="groundwood-bw">Économique – noir et blanc</option><option value="standard-colour">Couleur standard</option><option value="premium-colour">Couleur premium</option></select></label>
+        <label>Fond perdu<select id="bleed"><option value="false" selected>Non – texte uniquement</option><option value="true">Oui – illustrations jusqu'au bord</option></select></label>
+      </div>
+      <div class="options">
+        <label class="check"><input id="toc" type="checkbox" checked><span><strong>Créer une table des matières automatique</strong><small>À partir des titres et sous-titres détectés.</small></span></label>
+      </div>
+      <label>Description au dos <span class="optional">Facultatif</span><textarea id="description" rows="4" maxlength="4000" placeholder="Texte de présentation qui pourra apparaître sur la quatrième de couverture…"></textarea><small class="hint">Maximum 4 000 caractères. Le texte est repris tel quel, il n'est pas rédigé par l'application.</small></label>
+      <div class="actions"><button id="create-btn" class="primary" type="submit">Créer le projet <span>→</span></button><span class="privacy">🔒 Traitement local sur votre PC</span></div>
+    </form>
+    <section id="project-panel" class="panel result hidden">
+      <div class="panel-heading"><div><span class="number success">✓</span><h2>Projet créé</h2></div><p id="project-path"></p></div>
+      <div class="notice"><strong>Étape suivante</strong><p>Le moteur va générer l'intérieur, calculer la tranche, créer la couverture et contrôler les PDF.</p></div>
+      <button id="build-btn" class="primary" type="button">Générer les fichiers KDP <span>→</span></button>
+      <div id="build-output" class="build-output hidden"></div>
+    </section>
+    <footer><span>KDP Publishing Studio · Version expérimentale</span><span>Vérifiez toujours les PDF dans l'aperçu avant impression KDP.</span></footer>
+  </main>
+  <script src="/app.js"></script>
+</body>
+</html>

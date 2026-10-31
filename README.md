@@ -1,11 +1,34 @@
-# kdp-publishing
+# KDP Publishing Studio + KDP Publishing Plugin
 
-Claude Code plugin for producing an Amazon KDP paperback with
-[Typst](https://typst.app) — trim geometry, a full-wrap cover, mechanical
-pre-flight, and an upload folder.
+Produce Amazon KDP paperback interiors and full-wrap covers with [Typst](https://typst.app), geometry-aware pagination, mechanical preflight, and an upload folder.
+
+You can use this repository in **two ways**:
+
+- **Standalone KDP Publishing Studio:** a local browser interface that runs without Claude Code, accounts, subscriptions, or API keys. On Windows, install the tools below, then double-click `run-studio.bat`. See [the Studio guide](docs/studio-setup.md).
+- **Claude Code plugin:** the original command-driven workflow, installed with:
 
 ```
 /plugin install kdp-publishing@danielrosehill
+```
+
+The Studio keeps manuscripts and generated PDFs on your computer. Its local server listens only on `127.0.0.1`. Projects are saved in `%USERPROFILE%\KDP-Books\` on Windows.
+
+## Standalone Studio quick start
+
+1. Install Python 3.11+, Typst, and Poppler. On Windows follow [the setup guide](docs/windows-setup.md).
+2. Run `run-studio.bat`.
+3. Import a DOCX, TXT, or Markdown manuscript and set the print options.
+4. Generate the PDFs and find the KDP-ready files in the project's `dist/kdp-upload/` folder.
+
+The first Studio version imports text, Heading 1/2 styles, and table text from DOCX. It does not preserve Word images or advanced layout. Read [Studio limitations and setup](docs/studio-setup.md) before preparing an illustrated book.
+
+## It does not write your book
+
+The production engine is **typesetting, not authorship**. It takes a manuscript you already have and turns it into PDFs prepared against KDP's published technical specifications.
+
+It does not draft chapters, generate blurbs, invent keywords or write your description. Nothing in it assumes the text was written by an AI, and nothing in it works better if it was. If you typed every word yourself, this is aimed at you.
+
+
 ```
 
 ## It does not write your book
