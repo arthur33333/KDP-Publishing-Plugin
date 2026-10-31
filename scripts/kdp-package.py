@@ -72,6 +72,9 @@ def main() -> int:
     cover = dist / "cover.pdf"
     description_src = root / paths["description"]
     out = dist / "kdp-upload"
+    # Never leave an older upload package available after a failed rebuild.
+    if out.exists():
+        shutil.rmtree(out)
     stem = slug(book["title"])
 
     missing = [str(p.relative_to(root)) for p in (interior, description_src)
@@ -133,10 +136,6 @@ def main() -> int:
         description, keywords, categories
     )
 
-    # The package is generated output. Clear it first so an old cover can never
-    # survive a later run in which no valid current cover exists.
-    if out.exists():
-        shutil.rmtree(out)
     out.mkdir(parents=True, exist_ok=True)
     listing_review = [
         f"LISTING REVIEW — {book['title']}",
