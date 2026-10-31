@@ -45,6 +45,7 @@ sys.path.insert(0, str(Path(__file__).resolve().parent))
 
 import kdp_geometry as geo  # noqa: E402
 import kdp_project as proj  # noqa: E402
+import listing_audit  # noqa: E402
 
 
 def slug(text: str) -> str:
@@ -120,7 +121,26 @@ def main() -> int:
               file=sys.stderr)
         return 1
 
+    listing_warnings = listing_audit.audit_listing(
+        description, keywords, categories
+    )
+
     out.mkdir(parents=True, exist_ok=True)
+    listing_review = [
+        f"LISTING REVIEW — {book['title']}",
+        "=" * 68,
+        "",
+        "These are automated review suggestions, not a KDP approval decision.",
+        "Check current KDP guidance and review each suggestion yourself.",
+        "",
+    ]
+    if listing_warnings:
+        listing_review.extend(f"WARN  {warning}" for warning in listing_warnings)
+    else:
+        listing_review.append("No common listing issues detected by the local checks.")
+    (out / "listing-review.txt").write_text(
+        "\\n".join(listing_review) + "\\n", encoding="utf-8"
+    )
     shutil.copy2(interior, out / f"{stem}-interior.pdf")
     (out / "description.txt").write_text(description + "\n", encoding="utf-8")
 
