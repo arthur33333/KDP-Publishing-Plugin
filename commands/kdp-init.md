@@ -7,7 +7,7 @@ Set up a KDP paperback project here. Scope: $ARGUMENTS
 
 Use the `kdp-print-geometry` skill for the trim decision. In short:
 
-1. **Check the tools first.** `typst --version`, and `pdfinfo -v` for poppler-utils.
+1. **Check the tools first.** `typst --version`, plus `pdfinfo -v`, `pdftotext -v`, `pdffonts -v` and `pdfimages -v` for Poppler.
    Both are required and neither is worth discovering halfway through a build.
 
 2. **Establish what the book is.** Ask only what you cannot infer: title, author,
