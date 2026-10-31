@@ -26,6 +26,70 @@ PLACEHOLDER_RE = re.compile(
 )
 
 
+def strip_typst_comments(source: str) -> str:
+    """Remove line and nested block comments while preserving strings and line numbers."""
+    output: list[str] = []
+    index = 0
+    block_depth = 0
+    in_string = False
+    escaped = False
+    in_line_comment = False
+
+    while index < len(source):
+        char = source[index]
+        nxt = source[index + 1] if index + 1 < len(source) else ""
+
+        if in_line_comment:
+            if char == "\n":
+                in_line_comment = False
+                output.append(char)
+            else:
+                output.append(" ")
+            index += 1
+            continue
+
+        if block_depth:
+            if char == "/" and nxt == "*":
+                block_depth += 1
+                output.extend((" ", " "))
+                index += 2
+            elif char == "*" and nxt == "/":
+                block_depth -= 1
+                output.extend((" ", " "))
+                index += 2
+            else:
+                output.append("\n" if char == "\n" else " ")
+                index += 1
+            continue
+
+        if in_string:
+            output.append(char)
+            if escaped:
+                escaped = False
+            elif char == "\\":
+                escaped = True
+            elif char == '"':
+                in_string = False
+            index += 1
+            continue
+
+        if char == "/" and nxt == "/":
+            in_line_comment = True
+            output.extend((" ", " "))
+            index += 2
+        elif char == "/" and nxt == "*":
+            block_depth = 1
+            output.extend((" ", " "))
+            index += 2
+        else:
+            output.append(char)
+            if char == '"':
+                in_string = True
+            index += 1
+
+    return "".join(output)
+
+
 def source_files(body: Path) -> list[Path]:
     """Return manuscript Typst files in a stable order."""
     if body.is_file():
@@ -39,7 +103,7 @@ def analyze_file(path: Path, display_root: Path) -> list[dict]:
     """Find likely editorial leftovers and structurally empty/duplicate headings."""
     findings: list[dict] = []
     try:
-        lines = path.read_text(encoding="utf-8-sig").splitlines()
+        source = path.read_text(encoding="utf-8-sig")
     except (OSError, UnicodeError) as err:
         return [{
             "file": str(path.relative_to(display_root)),
@@ -49,6 +113,8 @@ def analyze_file(path: Path, display_root: Path) -> list[dict]:
         }]
 
     relative = str(path.relative_to(display_root))
+    clean_source = strip_typst_comments(source)
+    lines = clean_source.splitlines()
     headings: dict[str, list[int]] = defaultdict(list)
     parsed_headings: list[tuple[int, str]] = []
 
@@ -63,25 +129,41 @@ def analyze_file(path: Path, display_root: Path) -> list[dict]:
             parsed_headings.append((number, title))
             headings[title.casefold()].append(number)
 
-        # Typst resolves literal image paths relative to the source file that
-        # contains the image() call. Dynamic paths are intentionally not guessed.
-        for image_match in IMAGE_RE.finditer(raw):
-            image_name = image_match.group(1)
-            image_path = Path(image_name)
-            if not image_path.is_absolute() and not (path.parent / image_path).is_file():
-                findings.append({
-                    "file": relative,
-                    "line": number,
-                    "code": "MISSING_IMAGE",
-                    "message": f"Image file '{image_name}' was not found relative to this source file.",
-                })
-
         if PLACEHOLDER_RE.search(raw):
             findings.append({
                 "file": relative,
                 "line": number,
                 "code": "PLACEHOLDER",
                 "message": "Possible draft placeholder or editorial note remains.",
+            })
+
+    # Scan the complete comment-stripped source so a function call split over
+    # multiple lines is still checked. A leading slash is Typst-root-relative.
+    for image_match in IMAGE_RE.finditer(clean_source):
+        image_name = image_match.group(1)
+        line_number = clean_source.count("\n", 0, image_match.start()) + 1
+        if re.match(r"^[A-Za-z]:[\\/]", image_name):
+            findings.append({
+                "file": relative,
+                "line": line_number,
+                "code": "NON_PORTABLE_IMAGE_PATH",
+                "message": f"Image path '{image_name}' is an absolute Windows path; use a project-relative path.",
+            })
+            continue
+        if image_name.startswith("/"):
+            image_path = display_root / image_name.lstrip("/\\")
+        else:
+            image_path = path.parent / image_name
+        try:
+            image_display = str(image_path.relative_to(display_root))
+        except ValueError:
+            image_display = str(image_path)
+        if not image_path.is_file():
+            findings.append({
+                "file": relative,
+                "line": line_number,
+                "code": "MISSING_IMAGE",
+                "message": f"Image file '{image_name}' was not found at {image_display}.",
             })
 
     # A heading immediately followed by another heading (or end of file) is
@@ -123,7 +205,7 @@ def structure_summary(files: list[Path]) -> dict:
     counts = {"top_level_headings": 0, "section_headings": 0, "subheadings": 0}
     for path in files:
         try:
-            lines = path.read_text(encoding="utf-8-sig").splitlines()
+            lines = strip_typst_comments(path.read_text(encoding="utf-8-sig")).splitlines()
         except (OSError, UnicodeError):
             continue
         for raw in lines:
