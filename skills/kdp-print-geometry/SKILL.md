@@ -49,8 +49,12 @@ Page count times per-page caliper. No minimum, no rounding.
 |---|---|
 | White B&W | 0.002252 |
 | Cream B&W | 0.0025 |
-| Standard colour | 0.002252 |
+| Groundwood B&W | 0.00235 |
+| Standard colour | 0.002347 |
 | Premium colour | 0.002347 |
+
+Standard and premium colour use the same KDP caliper. Page-count limits also vary
+by paper and trim; use the geometry module instead of assuming the B&W ceiling.
 
 The paper chosen in the KDP form must match the paper the cover was built for, or
 the spine KDP computes stops matching the spine that was printed.
@@ -93,8 +97,8 @@ Outside margins: 0.25in minimum without bleed, 0.375in with. These are rejection
 thresholds, not designs — `recommended_margins()` adds a buffer over the floor,
 because a book set exactly at the minimum is accepted by KDP and still reads badly.
 
-`build-interior.py` derives margins from the **measured** first-pass extent for
-exactly this reason.
+`build-interior.py` derives margins from the **measured** extent and repeats until
+the gutter tier used for typesetting matches the actual page count.
 
 ## Bleed
 
