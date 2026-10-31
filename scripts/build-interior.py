@@ -53,6 +53,14 @@ def compile_pass(cfg: dict, pages_est: int, parity: bool) -> tuple[Path, int]:
     dist.mkdir(parents=True, exist_ok=True)
     out = dist / "interior.pdf"
     book_json = proj.write_book_json(cfg)
+    # The contents page is enabled by default. Existing projects can disable it
+    # explicitly with [interior].table_of_contents = false.
+    interior_settings = cfg.get("interior", {})
+    toc_enabled = interior_settings.get("table_of_contents", True)
+    if not isinstance(toc_enabled, bool):
+        raise proj.ProjectError(
+            "[interior].table_of_contents must be true or false in book.toml."
+        )
 
     proj.typst_compile(
         src=template,
@@ -70,6 +78,7 @@ def compile_pass(cfg: dict, pages_est: int, parity: bool) -> tuple[Path, int]:
             "margin_bottom": str(m["bottom"]),
             "body": paths["body"],
             "parity_leaf": "true" if parity else "false",
+            "toc": "true" if toc_enabled else "false",
         },
     )
     _, _, pages = proj.page_geometry(out)
