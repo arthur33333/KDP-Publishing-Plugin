@@ -87,10 +87,10 @@ def plain_paragraphs(text: str) -> list[tuple[int, str]]:
         line = raw.strip()
         if not line:
             continue
-        if line.startswith("### "):
-            result.append((2, line[4:].strip()))
-        elif line.startswith("## ") or line.startswith("# "):
-            result.append((1, line.lstrip("#").strip()))
+        if line.startswith("### ") or line.startswith("## "):
+            result.append((2, line.lstrip("#").strip()))
+        elif line.startswith("# "):
+            result.append((1, line[1:].strip()))
         elif line.startswith(("- ", "* ", "+ ")):
             result.append((0, "• " + line[2:].strip()))
         else:
