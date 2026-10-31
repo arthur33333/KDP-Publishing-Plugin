@@ -77,7 +77,7 @@
     top: m-top + bleed,
     bottom: m-bottom + bleed,
   ),
-  numbering: "1",
+  numbering: none,
   number-align: center,
 )
 
@@ -119,6 +119,10 @@
 
 #pagebreak(to: "odd", weak: true)
 
+// Front matter uses lower-case Roman numerals. The manuscript body restarts at
+// Arabic page 1 after the contents page, while the title page remains unnumbered.
+#set page(numbering: "i", number-align: center)
+
 // The outline is generated from real Typst headings in the manuscript. It is
 // deliberately limited to levels 1 and 2: chapter/part headings and their
 // immediate sections, not every small subsection. Turn it off in book.toml for
@@ -131,6 +135,11 @@
 }
 
 // --- Body --------------------------------------------------------------------
+
+// The manuscript starts at page 1 regardless of how many front-matter pages
+// the title page and contents occupy.
+#counter(page).update(1)
+#set page(numbering: "1", number-align: center)
 //
 // SCOPE CAVEAT, and it bites everyone once. Typst evaluates an included file in
 // its own module scope, so the body CANNOT see `#let` bindings defined above —
