@@ -76,7 +76,7 @@ builds correctly; it just has to be a decision rather than a typo.
        ↓
 /kdp-listing-review     audit description, keywords and categories
        ↓
-/kdp-build      typeset the interior — gutter-aware margins, even page count
+/kdp-build      typeset the interior — contents, pagination, gutter-aware margins, even page count
        ↓
 /kdp-preflight  trim, parity, gutter, font round-trip, listing limits
        ↓
@@ -94,14 +94,26 @@ after publication** and requires it to read exactly as the cover prints it.
 
 The interior template creates an automatic table of contents from Typst heading
 levels 1 and 2. It is enabled by default; set `[interior].table_of_contents = false`
-in `book.toml` for journals, workbooks or books that do not need one. The body
-should use Typst headings (`= Chapter`, `== Section`) rather than bold-only text
-so the contents page can link to them.
+in `book.toml` for journals, workbooks or books that do not need one. The title
+page is unnumbered, contents pages use Roman numerals, and the manuscript body
+restarts at Arabic page 1. Use Typst headings (`= Chapter`, `== Section`) rather
+than bold-only text so the contents page can link to them.
 
-The manuscript review also reports the heading hierarchy (top-level chapter/part
-candidates, sections and subheadings) and warns when a literal `image("...")`
-path cannot be found relative to the `.typ` source file. It does not rewrite images
-or alter the manuscript.
+For illustrations, use a Typst figure with a contained image so it scales to the
+text area without distortion or overflowing the margins:
+
+```typst
+#figure(
+  image("images/diagram.png", width: 100%, fit: "contain", alt: "Short description"),
+  caption: [Diagram caption],
+)
+```
+
+Image paths are relative to the `.typ` file that calls `image()`. The manuscript
+review reports heading hierarchy and checks literal image paths, including
+multiline calls and project-root paths. It ignores comments and warns about
+missing files and non-portable absolute Windows paths. It never rewrites images
+or alters the manuscript.
 
 ## Skills
 
@@ -127,6 +139,7 @@ quote the date alongside the number rather than presenting it as current.
 
 - [`typst`](https://github.com/typst/typst) on PATH
 - `poppler-utils` — `pdfinfo`, `pdftotext`, `pdffonts`
+- Contributors: CI also runs a real Typst build, cover, preflight and upload-package smoke test
 - Python 3.11+ (for `tomllib`)
 
 **Windows:** see [the Windows setup guide](docs/windows-setup.md) for installing
