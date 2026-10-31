@@ -72,6 +72,8 @@ builds correctly; it just has to be a decision rather than a typo.
 ```
 /kdp-init       choose a standard trim and paper, write book.toml, copy templates
        ↓
+/kdp-manuscript-review  flag common draft leftovers and empty/duplicate headings
+       ↓
 /kdp-build      typeset the interior — gutter-aware margins, even page count
        ↓
 /kdp-preflight  trim, parity, gutter, font round-trip, listing limits
@@ -126,6 +128,7 @@ the nearest `book.toml` by walking up from the working directory.
 ```bash
 python3 scripts/kdp_geometry.py --list-trims
 python3 scripts/kdp_geometry.py --pages 398 --trim 6x9 --json
+python3 scripts/analyze-manuscript.py
 python3 scripts/build-interior.py
 python3 scripts/build-cover.py
 python3 scripts/preflight.py --json
