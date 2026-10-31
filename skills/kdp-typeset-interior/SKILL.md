@@ -43,9 +43,30 @@ table_of_contents = false
 Use Typst heading markup (`= Chapter title`, `== Section title`) in the body
 source; plain bold paragraphs are not structural headings and will not appear.
 
-Page numbers remain centered in the footer. The contents page uses the actual
-page locations of headings, so its references follow the final layout after the
-build script has completed its margin and parity passes.
+The title page is unnumbered. Contents pages use lower-case Roman numerals, and
+the manuscript body restarts at Arabic page 1. Page numbers remain centered in
+the footer. The contents page uses actual heading locations, so its references
+follow the final layout after the build script has completed its margin and
+parity passes.
+
+## Images and figures
+
+Keep image files beside the manuscript source in a folder such as `images/` and
+reference them with a project-relative path from that `.typ` file. Use a figure
+and `fit: "contain"` so illustrations scale to the available text width without
+distortion or margin overflow:
+
+```typst
+#figure(
+  image("images/diagram.png", width: 100%, fit: "contain", alt: "Short description"),
+  caption: [Diagram caption],
+)
+```
+
+The manuscript review checks literal image paths, including multiline calls and
+project-root paths. It ignores comments and flags missing files or absolute
+Windows paths. Dynamic image paths cannot be resolved statically and are not
+claimed to be checked.
 
 ## Where the text lives
 
