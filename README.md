@@ -11,7 +11,7 @@ You can use this repository in **two ways**:
 /plugin install kdp-publishing@danielrosehill
 ```
 
-The Studio keeps manuscripts and generated PDFs on your computer. Its local server listens only on `127.0.0.1`. Projects are saved in `%USERPROFILE%\\KDP-Books\\` on Windows.
+The Studio keeps manuscripts and generated PDFs on your computer. Its local server listens only on `127.0.0.1`. Projects are saved in `%USERPROFILE%\KDP-Books\` on Windows.
 
 ## Standalone Studio quick start
 
