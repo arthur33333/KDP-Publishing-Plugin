@@ -65,6 +65,9 @@ def compile_pass(cfg: dict, pages_est: int, parity: bool) -> tuple[Path, int]:
 
     dist.mkdir(parents=True, exist_ok=True)
     out = dist / "interior.pdf"
+    # A failed rebuild must not leave an older PDF looking like the new output.
+    if out.exists():
+        out.unlink()
     book_json = proj.write_book_json(cfg)
     # Existing projects without an [interior] section get the default contents page.
     toc_enabled = table_of_contents_enabled(cfg)
