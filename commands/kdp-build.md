@@ -17,10 +17,11 @@ Run it from inside the book project, or pass `--project`. It finds the nearest
 **What it does that a single `typst compile` does not**, and why you should not
 replace it with one:
 
-- **Compiles more than once.** Printers need an even leaf count and the extent is
-  not known until the document is laid out. Typst cannot decide this itself — a
-  conditional on `counter(page).final()` changes the very count it reads and
-  oscillates forever. The decision has to be made from outside the document.
+- **Repeats until the geometry settles.** It measures the actual extent,
+  corrects the gutter tier when the page count crosses a KDP threshold, and adds
+  a parity leaf for production builds. It stops only when the measured gutter
+  tier and even page count agree. `--no-parity` is for proofing only: it still
+  corrects the gutter.
 - **Derives the margins from the measured extent.** KDP's minimum gutter is
   tiered by page count, so a book that crosses 300 pages needs a wider inside
   margin than the same book at 299. The second pass uses a real measurement.
@@ -35,6 +36,10 @@ that do not look like what they are:
 
 **Do not hand-edit the output PDF or the generated body.** If an entry is wrong,
 fix the source or the template.
+
+The title page is unnumbered, contents pages use lower-case Roman numerals, and
+the manuscript restarts at Arabic page 1. The contents page is generated from
+level-one and level-two Typst headings.
 
 When it succeeds, report the extent, the trim, and the spine width this page
 count implies. Then run `/kdp-preflight` — and only after that `/kdp-cover`,
