@@ -12,6 +12,7 @@
 //                      cleared against KDP's minimum gutter for this extent
 //   body               path to the manuscript body, relative to the project root
 //   parity_leaf        "true" to append a blank leaf for an even page count
+//   toc                "true" to generate a table of contents (default: true)
 //
 // EDIT THIS FILE FREELY. It is layout, not content. build-interior.py never
 // rewrites it, so typography changes survive every rebuild. What must NOT go in
@@ -37,6 +38,7 @@
 
 #let body-path = sys.inputs.at("body", default: "manuscript/body.typ")
 #let parity = flag("parity_leaf")
+#let toc-on = sys.inputs.at("toc", default: "true") == "true"
 
 // With bleed the FILE is larger than the trim, on the top, bottom and outer
 // edges only. Never on the gutter edge — that edge is bound, not trimmed.
@@ -117,6 +119,15 @@
 
 #pagebreak(to: "odd", weak: true)
 
+// The outline is generated from real Typst headings in the manuscript. It is
+// deliberately limited to levels 1 and 2: chapter/part headings and their
+// immediate sections, not every small subsection. Turn it off in book.toml for
+// books whose structure should not appear in a contents page.
+#if toc-on {
+  #outline(title: [Contents], depth: 2)
+  pagebreak(to: "odd", weak: true)
+}
+
 // --- Body --------------------------------------------------------------------
 //
 // SCOPE CAVEAT, and it bites everyone once. Typst evaluates an included file in
@@ -132,7 +143,7 @@
 // A blank leaf so the finished book has an even page count, which every printer
 // requires. Whether it is needed is decided by build-interior.py, from a real
 // measurement — Typst cannot decide it, because a conditional on
-// `counter(page).final()` changes the very count it is reading and oscillates.
+// counter(page).final() changes the very count it is reading and oscillates.
 #if parity {
   pagebreak()
   page(numbering: none)[]
