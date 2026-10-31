@@ -1,6 +1,6 @@
 # KDP interior margins and bleed
 
-**Verified 2026-08-12** against
+**Verified 2026-10-31** against
 <https://kdp.amazon.com/en_US/help/topic/GVBQ3CMEQW3W2VL6> and
 <https://kdp.amazon.com/en_US/help/topic/G201834260>.
 
@@ -20,9 +20,9 @@ boundary needs its margins changed rather than kept.
 | 501–700 | 0.750in |
 | 701–828 | 0.875in |
 
-`build-interior.py` derives margins from the **measured** first-pass extent for
-exactly this reason, and recompiles if the extent lands in a different tier than
-the seed.
+`build-interior.py` derives margins from the **measured** extent and repeats the
+build until the measured gutter tier matches the tier used for typesetting. A
+parity leaf is added only after measuring an odd production extent.
 
 Getting it wrong swallows text into the spine on every page of the book. It is
 invisible in a PDF viewer, because the viewer does not bind anything. KDP's own
