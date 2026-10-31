@@ -22,7 +22,7 @@ The only reliable signal is to enumerate every codepoint in the source, confirm
 each one survives the round trip into the PDF, and list which fonts actually got
 embedded so an unexpected substitution is visible before the proof copy is.
 
-Needs poppler-utils: pdftotext, pdffonts, pdfinfo.
+Needs poppler-utils: pdfinfo, pdftotext, pdffonts, pdfimages.
 """
 
 from __future__ import annotations
