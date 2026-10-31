@@ -146,6 +146,39 @@ class CoverPdfGeometryTests(unittest.TestCase):
         self.assertIsNone(preflight.cover_height_mismatch(9.251, 9.25))
 
 
+class PdfImageResolutionTests(unittest.TestCase):
+    def test_parses_effective_image_ppi(self):
+        output = (
+            "page num type width height color comp bpc enc interp object ID "
+            "x-ppi y-ppi size ratio\\n"
+            "1 0 image 1200 1200 rgb 3 8 image no 7 0 375 375 12K 0.1%\\n"
+            "1 1 smask 1200 1200 gray 1 8 image no 7 0 375 375 4K 0.1%\\n"
+        )
+        records = preflight.parse_pdf_image_resolutions(output)
+        self.assertEqual(len(records), 1)
+        self.assertEqual(records[0]["width_px"], 1200)
+        self.assertEqual(records[0]["x_ppi"], 375)
+        self.assertEqual(records[0]["y_ppi"], 375)
+
+    def test_low_resolution_is_a_failure(self):
+        failures, warnings = preflight.classify_image_resolutions(
+            [{"page": 3, "image": 0, "x_ppi": 220, "y_ppi": 300}],
+            "interior",
+        )
+        self.assertEqual(len(failures), 1)
+        self.assertIn("at least 300 PPI", failures[0])
+        self.assertEqual(warnings, [])
+
+    def test_very_high_resolution_is_a_warning(self):
+        failures, warnings = preflight.classify_image_resolutions(
+            [{"page": 1, "image": 0, "x_ppi": 900, "y_ppi": 900}],
+            "cover",
+        )
+        self.assertEqual(failures, [])
+        self.assertEqual(len(warnings), 1)
+        self.assertIn("at or below 600 PPI", warnings[0])
+
+
 class PreflightCommandTests(unittest.TestCase):
     @patch.object(preflight.subprocess, "run")
     def test_run_returns_stdout_on_success(self, mocked_run):
