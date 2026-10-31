@@ -46,7 +46,20 @@ BODY_SUFFIXES = {".typ", ".md", ".txt", ".json", ".yaml", ".yml", ".toml"}
 
 
 def run(cmd: list[str]) -> str:
-    return subprocess.run(cmd, capture_output=True, text=True).stdout
+    """Run a Poppler command and fail clearly instead of treating errors as empty output."""
+    try:
+        result = subprocess.run(
+            cmd, capture_output=True, text=True, errors="replace", check=False
+        )
+    except OSError as err:
+        raise SystemExit(f"! could not run {cmd[0]!r}: {err}") from err
+
+    if result.returncode != 0:
+        detail = result.stderr.strip() or result.stdout.strip() or "no diagnostic output"
+        raise SystemExit(
+            f"! {cmd[0]} exited with code {result.returncode}: {detail}"
+        )
+    return result.stdout
 
 
 # Running commentary goes to stderr under --json, so stdout stays a single
