@@ -176,8 +176,8 @@ def page_geometry(pdf: Path) -> tuple[float, float, int]:
                 f"pdfinfo failed for {pdf.name} (exit {result.returncode}): {detail}"
             )
 
-        size = re.search(r"^Page size:\\s+([\\d.]+) x ([\\d.]+)", result.stdout, re.M)
-        pages = re.search(r"^Pages:\\s+(\\d+)", result.stdout, re.M)
+        size = re.search(r"^Page size:\s+([\d.]+) x ([\d.]+)", result.stdout, re.M)
+        pages = re.search(r"^Pages:\s+(\d+)", result.stdout, re.M)
         if not size or not pages:
             raise ProjectError(
                 f"pdfinfo could not report page size and page count for {pdf.name}"
