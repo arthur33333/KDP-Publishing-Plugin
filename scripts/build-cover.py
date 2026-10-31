@@ -49,6 +49,9 @@ def main() -> int:
     except proj.ProjectError as err:
         sys.exit(f"! {err}")
 
+    if args.pages is not None and args.pages <= 0:
+        sys.exit("! --pages must be a positive page count.")
+
     root, dist = cfg["root"], cfg["dist"]
     printing, paths, book = cfg["print"], cfg["paths"], cfg["book"]
     interior = dist / "interior.pdf"
@@ -60,8 +63,10 @@ def main() -> int:
                  "is nothing to build a cover against yet.")
 
     iw, ih, real_pages = proj.page_geometry(interior)
-    pages = args.pages or real_pages
-    what_if = args.pages is not None and args.pages != real_pages
+    pages = real_pages if args.pages is None else args.pages
+    # Supplying --pages is always a simulation, even when it matches the
+    # measured interior. Never overwrite the production cover in what-if mode.
+    what_if = args.pages is not None
 
     if pages % 2:
         sys.exit(f"! {pages} pages is odd — the interior should have been padded. "
