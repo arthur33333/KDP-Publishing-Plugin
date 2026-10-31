@@ -359,7 +359,7 @@ def validate(pages: int, trim: str = DEFAULT_TRIM, paper: str = DEFAULT_PAPER,
 
 def _report(pages: int, trim: str, paper: str, bleed: bool) -> None:
     cover = cover_dimensions(pages, trim, paper)
-    inner = interior_geometry(pages, trim, bleed)
+    inner = interior_geometry(pages, trim, bleed, paper)
     tw, th = cover["trim"]["w"], cover["trim"]["h"]
     std = cover["trim"]["standard"]
 
