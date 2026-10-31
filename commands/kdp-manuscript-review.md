@@ -15,7 +15,10 @@ directory containing multiple `.typ` files.
 
 It reports likely editorial placeholders (TODO, FIXME, TBD, TK, Lorem ipsum,
 "your text here", and "[insert ...]"), headings with no visible source content
-before the next heading, and duplicate heading titles within one source file.
+before the next heading, duplicate heading titles within one source file, and
+missing image files referenced by literal `image("...")` calls. It handles
+multiline image calls and project-root paths, ignores Typst comments, and warns
+about absolute Windows paths that will not work on another machine.
 
 These are **warnings, not automatic corrections**. A repeated heading or an
 empty section can be intentional, and the checker cannot assess factual
