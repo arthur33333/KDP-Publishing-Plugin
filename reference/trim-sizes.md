@@ -1,14 +1,15 @@
-# KDP paperback trim sizes and paper
+# KDP paperback trim sizes, paper and page limits
 
-**Verified 2026-08-12** against KDP's paperback print options form and
-<https://kdp.amazon.com/en_US/help/topic/GVBQ3CMEQW3W2VL6>.
+**Trim list verified 2026-08-12. Paper calipers and page limits re-verified
+2026-10-31** against KDP's official paperback submission guidelines:
+<https://kdp.amazon.com/en_US/help/topic/G201857950>.
 
 KDP changes these without notice and without a changelog. Re-check before any
 upload that matters, and move the date above when you do.
 
-The machine-readable copy is `scripts/kdp_geometry.py` — `KDP_STANDARD_TRIMS`
-and `PAPER_CALIPER`. This file is the provenance; that file is the source of
-truth for anything computed.
+The machine-readable copy is `scripts/kdp_geometry.py`:
+`KDP_STANDARD_TRIMS`, `PAPER_CALIPER`, `STANDARD_PAGE_LIMITS` and
+`PAGE_LIMIT_OVERRIDES`.
 
 ## Standard trim sizes
 
@@ -32,38 +33,59 @@ accept. **Prefer one.**
 | `8.5x11` | 8.5 × 11 | 21.59 × 27.94 cm | US Letter. Workbooks, textbooks, code |
 
 **Large trim.** Anything wider than 6.12in or taller than 9in is priced as large
-trim and costs more per copy. That covers `6.69x9.61` and everything below it in
-the table.
+trim and costs more per copy.
 
 **Non-standard sizes.** KDP accepts trims from 4 × 6in up to 8.5 × 11.69in.
-`kdp_geometry.py` computes them correctly and `is_standard()` returns `None`, so
-every caller warns. It is a legitimate choice, not an error — but it should be a
-choice.
+`kdp_geometry.py` computes dimensions for literal sizes. If a non-standard trim
+has no explicit page-limit row in the current code, the plugin warns and asks
+you to verify that limit in KDP rather than inventing one.
 
-## Paper and caliper
+## Paper and spine caliper
 
-Spine width is page count × caliper. No minimum, no rounding rule.
+Spine width is page count × the caliper below.
 
 | Paper | Caliper (in/page) | Notes |
-|---|---|---|
-| White B&W | 0.002252 | Cheapest. Higher contrast; can glare over long text |
-| Cream B&W | 0.0025 | Easier on the eye over hundreds of pages. Standard for prose |
-| Standard colour | 0.002252 | Much more expensive per page |
-| Premium colour | 0.002347 | Photo-grade, most expensive |
+|---|---:|---|
+| White B&W | 0.002252 | Black ink on white paper |
+| Cream B&W | 0.0025 | Black ink on cream paper |
+| Groundwood B&W | 0.00235 | Availability depends on marketplace |
+| Standard colour | 0.002347 | Colour paper |
+| Premium colour | 0.002347 | Colour paper |
 
-**The paper selected in the KDP form must match the paper the cover was built
-for.** Cream and white differ by 0.000248in per page — 0.10in of spine across a
-400-page book, which is enough to move the spine type onto a face.
+**Important correction:** KDP specifies the same 0.002347in/page caliper for
+standard and premium colour. The code now uses that figure for both. Groundwood
+is included as a separate paper option at 0.00235in/page.
 
-## Page count limits
+## Paperback page-count limits (US KDP table)
 
-| | |
-|---|---|
-| Minimum | 24 pages |
-| Maximum, B&W | 828 pages |
-| Maximum, colour | Lower; check the current figure — it varies by trim and ink |
-| Parity | Must be even |
-| Spine text | Only above 79 pages |
+For the standard trim sizes from 5×8 through 8×10:
 
-`kdp_geometry.py` carries the B&W limit. A colour book near the ceiling needs the
-current figure checked directly.
+| Paper | Minimum | Maximum |
+|---|---:|---:|
+| Black ink, white paper | 24 | 828 |
+| Black ink, cream paper | 24 | 776 |
+| Black ink, groundwood paper | 24 | 812 |
+| Standard colour ink, white paper | 72 | 600 |
+| Premium colour ink, white paper | 24 | 828 |
+
+KDP publishes lower ceilings for some larger and square trim sizes:
+
+| Trim | White B&W | Cream B&W | Groundwood B&W | Standard colour | Premium colour |
+|---|---:|---:|---:|---:|---:|
+| 8.25 × 6in | 800 | 750 | 784 | 600 | 800 |
+| 8.25 × 8.25in | 800 | 750 | 784 | 600 | 800 |
+| 8.27 × 11.69in (A4) | 780 | 730 | 764 | Not available | 590 |
+| 8.5 × 8.5in | 590 | 550 | 578 | 600 | 590 |
+| 8.5 × 11in | 590 | 550 | 578 | 600 | 590 |
+
+All minimums are 24 pages except standard colour, which starts at 72 pages.
+The code blocks the known unavailable A4 standard-colour combination. It does
+not pretend that an unlisted custom trim has a verified maximum.
+
+## Parity and spine text
+
+- The final interior page count must be even. The build script measures the PDF
+  and adds a blank leaf when needed.
+- KDP prints spine text only above 79 pages. A shorter book is still valid; its
+  cover must simply omit spine text.
+
