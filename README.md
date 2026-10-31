@@ -78,7 +78,7 @@ builds correctly; it just has to be a decision rather than a typo.
        ↓
 /kdp-build      typeset the interior — contents, pagination, gutter-aware margins, even page count
        ↓
-/kdp-preflight  trim, parity, gutter, font round-trip, listing limits
+/kdp-preflight  trim, parity, gutter, image resolution, font round-trip, listing limits
        ↓
 /kdp-cover      full wrap, spine measured from the built interior
        ↓
