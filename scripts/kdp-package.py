@@ -98,10 +98,7 @@ def main() -> int:
     geometry_problems = geo.validate(
         pages, printing["trim"], printing["paper"], printing["bleed"]
     )
-    blocking_geometry = [
-        problem for problem in geometry_problems
-        if "not a KDP standard trim" not in problem and "no spine text" not in problem
-    ]
+    blocking_geometry = [problem for problem in geometry_problems if not geo.is_warning(problem)]
     if blocking_geometry:
         for problem in blocking_geometry:
             print(f"! {problem}", file=sys.stderr)
