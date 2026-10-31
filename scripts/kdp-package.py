@@ -17,13 +17,15 @@ WHAT IT CHECKS, AND WHY EACH CHECK EXISTS
   - The interior really is the trim book.toml claims. KDP will accept a file at
     the wrong trim and print the book with the wrong margins. Nobody sees that
     until the proof arrives.
-  - The page count is even, and the spine on the built cover matches THAT page
+  - The page count is within supported limits and even, and the spine on the built cover matches THAT page
     count rather than a stale one. This is the second of the two independent
     checks on the cover: build-cover.py measured the interior on the way in, this
     measures the finished wrap on the way out and subtracts both faces and both
     bleeds to see what is left. A cover has to defeat both to reach the printer.
   - The description fits KDP's 4,000-character field.
   - Keywords and categories are within KDP's limits and contain no quotation marks.
+  - Advisory listing-review warnings are included for manual review.
+  - A previous upload folder is cleared so obsolete PDFs cannot survive a rebuild.
   - The title's display line-breaks join back to the title exactly. KDP will not
     let the title be edited more than 72 hours after publication and requires it
     to read exactly as the cover prints it.
