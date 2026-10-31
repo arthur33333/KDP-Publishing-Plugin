@@ -18,6 +18,7 @@ sys.path.insert(0, str(Path(__file__).resolve().parent))
 import kdp_project as proj  # noqa: E402
 
 HEADING_RE = re.compile(r"^\s*(=+)\s+(.+?)\s*$")
+IMAGE_RE = re.compile(r'\\bimage\\(\\s*"([^"]+)"')
 PLACEHOLDER_RE = re.compile(
     r"\b(?:TODO|FIXME|TBD|TK)\b|lorem\s+ipsum|your\s+text\s+here|"
     r"\[\s*insert\b",
@@ -62,6 +63,19 @@ def analyze_file(path: Path, display_root: Path) -> list[dict]:
             parsed_headings.append((number, title))
             headings[title.casefold()].append(number)
 
+        # Typst resolves literal image paths relative to the source file that
+        # contains the image() call. Dynamic paths are intentionally not guessed.
+        for image_match in IMAGE_RE.finditer(raw):
+            image_name = image_match.group(1)
+            image_path = Path(image_name)
+            if not image_path.is_absolute() and not (path.parent / image_path).is_file():
+                findings.append({
+                    "file": relative,
+                    "line": number,
+                    "code": "MISSING_IMAGE",
+                    "message": f"Image file '{image_name}' was not found relative to this source file.",
+                })
+
         if PLACEHOLDER_RE.search(raw):
             findings.append({
                 "file": relative,
@@ -104,6 +118,30 @@ def analyze_file(path: Path, display_root: Path) -> list[dict]:
     return findings
 
 
+def structure_summary(files: list[Path]) -> dict:
+    """Count Typst heading levels without assuming every level-one heading is a chapter."""
+    counts = {"top_level_headings": 0, "section_headings": 0, "subheadings": 0}
+    for path in files:
+        try:
+            lines = path.read_text(encoding="utf-8-sig").splitlines()
+        except (OSError, UnicodeError):
+            continue
+        for raw in lines:
+            if raw.strip().startswith("//"):
+                continue
+            match = HEADING_RE.match(raw)
+            if not match:
+                continue
+            level = len(match.group(1))
+            if level == 1:
+                counts["top_level_headings"] += 1
+            elif level == 2:
+                counts["section_headings"] += 1
+            else:
+                counts["subheadings"] += 1
+    return counts
+
+
 def main() -> int:
     parser = argparse.ArgumentParser(description=__doc__.splitlines()[0])
     parser.add_argument("--project", type=Path, default=None,
@@ -135,15 +173,23 @@ def main() -> int:
     for path in files:
         findings.extend(analyze_file(path, root))
 
+    structure = structure_summary(files)
     if args.json:
         print(json.dumps({
             "project": str(root),
             "files_scanned": len(files),
+            "structure": structure,
             "warning_count": len(findings),
             "findings": findings,
         }, indent=2, ensure_ascii=False))
     else:
         print(f"Manuscript review: {len(files)} source file(s)")
+        print(
+            "Structure: "
+            f"{structure['top_level_headings']} top-level heading(s), "
+            f"{structure['section_headings']} section(s), "
+            f"{structure['subheadings']} subheading(s)."
+        )
         if not findings:
             print("PASS  No common placeholders, empty sections or duplicate headings found.")
         else:
