@@ -43,6 +43,9 @@ def docx_paragraphs(data: bytes) -> list[tuple[int, str]]:
         archive = Path(tmp) / "source.docx"
         archive.write_bytes(data)
         with zipfile.ZipFile(archive) as zf:
+            info = zf.getinfo("word/document.xml")
+            if info.file_size > MAX_UPLOAD:
+                raise ValueError("Le document Word décompressé dépasse la limite autorisée.")
             xml = ET.fromstring(zf.read("word/document.xml"))
     output: list[tuple[int, str]] = []
     body = xml.find("w:body", NS)
@@ -191,7 +194,6 @@ price_note = "Unverified — check KDP current printing rates"
     (project / "book.toml").write_text(manifest, encoding="utf-8")
     (project / "manuscript" / "body.typ").write_text(body, encoding="utf-8")
     (project / "listing" / "description.txt").write_text(description, encoding="utf-8")
-    (project / "SOURCE-" + Path(filename).name).write_bytes(raw) if False else None
     (project / "README-STUDIO.txt").write_text(
         "Projet créé par KDP Publishing Studio.\n"
         "Le manuscrit converti est dans manuscript/body.typ.\n"
