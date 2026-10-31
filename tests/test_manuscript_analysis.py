@@ -42,7 +42,7 @@ class ManuscriptReviewTests(unittest.TestCase):
         self.assertEqual(findings, [])
 
     def test_detects_missing_literal_image_path(self):
-        findings = self.analyze('= Chapter One\\n#image("images/missing.png")\\nText\\n')
+        findings = self.analyze('= Chapter One\n#image("images/missing.png")\nText\n')
         self.assertIn("MISSING_IMAGE", [item["code"] for item in findings])
 
     def test_existing_image_is_not_flagged(self):
@@ -51,7 +51,7 @@ class ManuscriptReviewTests(unittest.TestCase):
             (root / "images").mkdir()
             (root / "images" / "cover.png").write_bytes(b"test image")
             source = root / "body.typ"
-            source.write_text('= Chapter One\\n#image("images/cover.png")\\nText\\n', encoding="utf-8")
+            source.write_text('= Chapter One\n#image("images/cover.png")\nText\n', encoding="utf-8")
             findings = review.analyze_file(source, root)
             self.assertNotIn("MISSING_IMAGE", [item["code"] for item in findings])
 
@@ -59,7 +59,7 @@ class ManuscriptReviewTests(unittest.TestCase):
         with tempfile.TemporaryDirectory() as tmp:
             root = Path(tmp)
             source = root / "body.typ"
-            source.write_text("= Chapter One\\n== Section\\n=== Subsection\\n", encoding="utf-8")
+            source.write_text("= Chapter One\n== Section\n=== Subsection\n", encoding="utf-8")
             self.assertEqual(review.structure_summary([source]), {
                 "top_level_headings": 1,
                 "section_headings": 1,
