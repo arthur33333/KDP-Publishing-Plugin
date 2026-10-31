@@ -54,6 +54,7 @@ Verify all three commands:
 pdfinfo -v
 pdftotext -v
 pdffonts -v
+pdfimages -v
 ```
 
 If PowerShell says a command is not recognized, the Poppler `Library\bin`
