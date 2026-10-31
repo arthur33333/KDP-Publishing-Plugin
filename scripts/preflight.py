@@ -63,6 +63,53 @@ def run(cmd: list[str]) -> str:
     return result.stdout
 
 
+def parse_pdf_image_resolutions(output: str) -> list[dict]:
+    """Parse image pixel dimensions and effective PPI from pdfimages -list output."""
+    records: list[dict] = []
+    for line in output.splitlines():
+        parts = line.split()
+        if len(parts) < 14 or not parts[0].isdigit() or not parts[1].isdigit():
+            continue
+        if parts[2] != "image":
+            continue
+        try:
+            records.append({
+                "page": int(parts[0]),
+                "image": int(parts[1]),
+                "width_px": int(parts[3]),
+                "height_px": int(parts[4]),
+                "x_ppi": float(parts[12]),
+                "y_ppi": float(parts[13]),
+            })
+        except (ValueError, IndexError):
+            continue
+    return records
+
+
+def classify_image_resolutions(records: list[dict], label: str,
+                               minimum_ppi: float = 300,
+                               recommended_max_ppi: float = 600) -> tuple[list[str], list[str]]:
+    """Return hard resolution failures and high-resolution advisory warnings."""
+    failures: list[str] = []
+    warnings: list[str] = []
+    for item in records:
+        low = min(item["x_ppi"], item["y_ppi"])
+        high = max(item["x_ppi"], item["y_ppi"])
+        where = f"{label} image {item['image']} on page {item['page']}"
+        if low < minimum_ppi:
+            failures.append(
+                f"{where} is {item['x_ppi']:.0f} x {item['y_ppi']:.0f} PPI; "
+                f"KDP requires at least {minimum_ppi:.0f} PPI"
+            )
+        elif high > recommended_max_ppi:
+            warnings.append(
+                f"{where} is {item['x_ppi']:.0f} x {item['y_ppi']:.0f} PPI; "
+                f"KDP recommends staying at or below {recommended_max_ppi:.0f} PPI "
+                "to avoid unnecessarily large PDFs"
+            )
+    return failures, warnings
+
+
 def cover_height_mismatch(actual_height_in: float, expected_height_in: float,
                          tolerance: float = 0.02) -> str | None:
     """Return a diagnostic when the cover PDF height differs from its required wrap."""
@@ -125,7 +172,7 @@ def main() -> int:
     if not interior.exists():
         sys.exit("! dist/interior.pdf missing — run build-interior.py first")
 
-    for tool in ("pdftotext", "pdffonts"):
+    for tool in ("pdftotext", "pdffonts", "pdfimages"):
         if not shutil.which(tool):
             sys.exit(f"! {tool} not on PATH — install poppler-utils")
 
@@ -274,6 +321,24 @@ def main() -> int:
         say("cover           not built yet — build it last, against these "
               f"{pages} pages")
         report["cover"] = None
+
+    # --- image resolution ----------------------------------------------------
+    image_reports: dict[str, list[dict]] = {}
+    image_pdfs = [("interior", interior)]
+    if cover.exists():
+        image_pdfs.append(("cover", cover))
+    for label, pdf_path in image_pdfs:
+        image_records = parse_pdf_image_resolutions(
+            run(["pdfimages", "-list", str(pdf_path)])
+        )
+        image_reports[label] = image_records
+        image_failures, image_warnings = classify_image_resolutions(
+            image_records, label
+        )
+        failures.extend(image_failures)
+        warnings.extend(image_warnings)
+        say(f"{label + ' images':16} {len(image_records)} raster image(s) checked")
+    report["images"] = image_reports
 
     # --- listing -------------------------------------------------------------
     description = root / paths["description"]
