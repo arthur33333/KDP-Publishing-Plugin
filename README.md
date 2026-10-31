@@ -90,6 +90,19 @@ settings. The title page, the cover and the KDP listing all derive from it, so
 they cannot disagree — which matters because **KDP locks the title field 72 hours
 after publication** and requires it to read exactly as the cover prints it.
 
+## Interior layout and manuscript assets
+
+The interior template creates an automatic table of contents from Typst heading
+levels 1 and 2. It is enabled by default; set `[interior].table_of_contents = false`
+in `book.toml` for journals, workbooks or books that do not need one. The body
+should use Typst headings (`= Chapter`, `== Section`) rather than bold-only text
+so the contents page can link to them.
+
+The manuscript review also reports the heading hierarchy (top-level chapter/part
+candidates, sections and subheadings) and warns when a literal `image("...")`
+path cannot be found relative to the `.typ` source file. It does not rewrite images
+or alter the manuscript.
+
 ## Skills
 
 - `kdp-print-geometry` — trim, paper, spine, margins, bleed, wrap dimensions
