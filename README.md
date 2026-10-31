@@ -1,6 +1,6 @@
 # kdp-publishing
 
-Claude Code plugin for producing a print-ready Amazon KDP paperback with
+Claude Code plugin for producing an Amazon KDP paperback with
 [Typst](https://typst.app) — trim geometry, a full-wrap cover, mechanical
 pre-flight, and an upload folder.
 
@@ -59,7 +59,7 @@ book at 299. Under it, text is swallowed into the bind on every page — and a P
 viewer will never show you, because it does not bind anything. Margins here are derived from the *measured* extent and rebuilt until the correct
 gutter tier is stable.
 
-The principle underneath all three: **check the artifact, not the signal that
+The principle underneath all four: **check the artifact, not the signal that
 stands in for it.**
 
 ## Standard trim sizes, by default
