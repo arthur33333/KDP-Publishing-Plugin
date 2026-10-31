@@ -61,6 +61,10 @@ description = "listing/description.txt"
 dist = "dist"
 
 
+[interior]
+# Generate a contents page from manuscript headings. Set false to omit it.
+table_of_contents = true
+
 [listing]
 # Chosen values only. Anything measurable — page count, trim, spine — is read
 # back out of the built PDFs instead, and never typed here.
