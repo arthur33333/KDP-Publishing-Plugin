@@ -9,10 +9,10 @@ Every other script in this plugin imports this module rather than carrying its o
 copy of the numbers. That is the point: a caliper or a bleed figure written down in
 two places is a caliper that will disagree with itself the first time KDP moves it.
 
-FIGURES VERIFIED AGAINST KDP'S OWN HELP PAGES ON 2026-10-31. KDP changes these
-without notice and without a changelog. `reference/` carries the source URL and the
-verification date for each table; re-check before any upload that matters and move
-the date when you do.
+PAPER CALIPERS, PAGE LIMITS AND GUTTER FIGURES RE-VERIFIED ON 2026-10-31;
+standard trim names last checked 2026-08-12. KDP changes these without notice and
+without a changelog. `reference/` carries the source URL and verification date for
+each table; re-check before any upload that matters and move the date when you do.
 
 WHY THE US STANDARD SIZES ARE PRIVILEGED. KDP splits paperback trims into "standard"
 and "non-standard". Standard sizes are available in every marketplace, are the only
@@ -414,7 +414,7 @@ def main() -> int:
                 {k: {"w": w, "h": h, "metric": cm, "note": TRIM_NOTES.get(k, "")}
                  for k, (w, h, cm) in KDP_STANDARD_TRIMS.items()}, indent=2))
         else:
-            print("\nKDP STANDARD PAPERBACK TRIM SIZES (verified 2026-10-31)\n")
+            print("\nKDP STANDARD PAPERBACK TRIM SIZES (verified 2026-08-12)\n")
             for k, (w, h, cm) in KDP_STANDARD_TRIMS.items():
                 mark = " <- default" if k == DEFAULT_TRIM else ""
                 print(f"  {k:<12} {w} x {h} in   {cm:<18}{mark}")
