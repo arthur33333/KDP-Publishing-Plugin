@@ -112,7 +112,11 @@ quote the date alongside the number rather than presenting it as current.
 - `poppler-utils` — `pdfinfo`, `pdftotext`, `pdffonts`
 - Python 3.11+ (for `tomllib`)
 
-No API keys, no network calls, no accounts. The whole thing runs offline.
+**Windows:** see [the Windows setup guide](docs/windows-setup.md) for installing
+Python, Typst and the Poppler PDF utilities and adding them to PATH.
+
+No API keys, no network calls, no accounts. The production scripts run locally
+after their dependencies are installed.
 
 ## Scripts
 
