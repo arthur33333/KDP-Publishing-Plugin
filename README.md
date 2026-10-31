@@ -48,11 +48,16 @@ other face, and exits 0. On a machine with different fonts installed, the same
 source produces a different book. Pre-flight enumerates every codepoint in the
 source, confirms each survives into the PDF, and lists what actually got embedded.
 
+**An image placed at the wrong resolution.** KDP requires raster images to be at
+least 300 PPI at their final placed size. Preflight reads effective PPI from the
+finished PDFs, fails low-resolution images, and warns about images above the
+recommended 600 PPI ceiling.
+
 **A gutter set for the wrong extent.** KDP's minimum inside margin is tiered by
 page count, so a book that grows past 300 pages needs wider margins than the same
 book at 299. Under it, text is swallowed into the bind on every page — and a PDF
-viewer will never show you, because it does not bind anything. Margins here are
-derived from the *measured* first-pass extent, not from an estimate.
+viewer will never show you, because it does not bind anything. Margins here are derived from the *measured* extent and rebuilt until the correct
+gutter tier is stable.
 
 The principle underneath all three: **check the artifact, not the signal that
 stands in for it.**
