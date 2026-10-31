@@ -132,7 +132,7 @@ SAFE_ZONE = 0.25         # KDP's minimum clearance from the trim line for cover 
 SPINE_TEXT_MIN_PAGES = 80  # KDP prints no spine text at or below 79 pages
 SPINE_TEXT_CLEARANCE = 0.0625  # KDP's stated minimum type-to-fold clearance
 PAGE_MIN = 24
-PAGE_MAX = 828           # B&W; colour interiors cap lower, see reference/trim-sizes.md
+PAGE_MAX = 828           # Global maximum envelope; use page_limits() for actual limits.
 DESCRIPTION_MAX = 4000
 KEYWORDS_MAX = 7
 CATEGORIES_MAX = 3
@@ -140,7 +140,7 @@ PT = 72.0                # PostScript points per inch
 
 # Minimum INSIDE margin (gutter) by page count. KDP states these as hard minimums;
 # going under them pulls text into the bind on every page of the book, which is
-# invisible in a PDF viewer and obvious in a proof copy. Verified 2026-08-12.
+# invisible in a PDF viewer and obvious in a proof copy. Verified 2026-10-31.
 GUTTER_TIERS: list[tuple[int, float]] = [
     (150, 0.375),
     (300, 0.500),
@@ -357,6 +357,15 @@ def validate(pages: int, trim: str = DEFAULT_TRIM, paper: str = DEFAULT_PAPER,
     return problems
 
 
+def is_warning(problem: str) -> bool:
+    """Whether a geometry finding is advisory rather than a publishing blocker."""
+    return (
+        "not a KDP standard trim" in problem
+        or "no spine text" in problem
+        or "page-count limit is not modelled" in problem
+    )
+
+
 def _report(pages: int, trim: str, paper: str, bleed: bool) -> None:
     cover = cover_dimensions(pages, trim, paper)
     inner = interior_geometry(pages, trim, bleed, paper)
@@ -382,7 +391,8 @@ def _report(pages: int, trim: str, paper: str, bleed: bool) -> None:
           if st["printable"] else f"  spine text         NOT PRINTABLE — {st['reason']}")
 
     for problem in validate(pages, trim, paper, bleed):
-        print(f"  !! {problem}")
+        level = "WARN" if is_warning(problem) else "!!"
+        print(f"  {level} {problem}")
 
 
 def main() -> int:
@@ -404,7 +414,7 @@ def main() -> int:
                 {k: {"w": w, "h": h, "metric": cm, "note": TRIM_NOTES.get(k, "")}
                  for k, (w, h, cm) in KDP_STANDARD_TRIMS.items()}, indent=2))
         else:
-            print("\nKDP STANDARD PAPERBACK TRIM SIZES (verified 2026-08-12)\n")
+            print("\nKDP STANDARD PAPERBACK TRIM SIZES (verified 2026-10-31)\n")
             for k, (w, h, cm) in KDP_STANDARD_TRIMS.items():
                 mark = " <- default" if k == DEFAULT_TRIM else ""
                 print(f"  {k:<12} {w} x {h} in   {cm:<18}{mark}")
@@ -417,7 +427,7 @@ def main() -> int:
     if args.json:
         print(json.dumps({
             "cover": cover_dimensions(args.pages, args.trim, args.paper),
-            "interior": interior_geometry(args.pages, args.trim, args.bleed),
+            "interior": interior_geometry(args.pages, args.trim, args.bleed, args.paper),
             "problems": validate(args.pages, args.trim, args.paper, args.bleed),
         }, indent=2))
         return 0
