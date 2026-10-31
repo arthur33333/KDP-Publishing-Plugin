@@ -127,5 +127,49 @@ class PreflightCommandTests(unittest.TestCase):
         self.assertIn("could not run 'pdfinfo'", str(raised.exception))
 
 
+class PdfInfoGeometryTests(unittest.TestCase):
+    def setUp(self):
+        self.tmp = tempfile.TemporaryDirectory()
+        self.pdf = Path(self.tmp.name) / "sample.pdf"
+        self.pdf.write_bytes(b"%PDF-1.4\\n")
+    
+    def tearDown(self):
+        self.tmp.cleanup()
+
+    @patch("kdp_project.shutil.which", return_value="/usr/bin/pdfinfo")
+    @patch("kdp_project.subprocess.run")
+    def test_pdfinfo_success_returns_measured_geometry(self, mocked_run, _which):
+        import kdp_project as project
+        mocked_run.return_value = SimpleNamespace(
+            returncode=0,
+            stdout="Pages:           120\\nPage size:       432 x 648 pts (6 x 9 in)\\n",
+            stderr="",
+        )
+        self.assertEqual(project.page_geometry(self.pdf), (432.0, 648.0, 120))
+
+    @patch("kdp_project.shutil.which", return_value="/usr/bin/pdfinfo")
+    @patch("kdp_project.subprocess.run")
+    def test_pdfinfo_nonzero_exit_does_not_fall_back_to_regex(self, mocked_run, _which):
+        import kdp_project as project
+        mocked_run.return_value = SimpleNamespace(
+            returncode=1, stdout="", stderr="Syntax Error: damaged PDF"
+        )
+        with self.assertRaises(project.ProjectError) as raised:
+            project.page_geometry(self.pdf)
+        self.assertIn("pdfinfo failed", str(raised.exception))
+        self.assertIn("damaged PDF", str(raised.exception))
+
+    @patch("kdp_project.shutil.which", return_value="/usr/bin/pdfinfo")
+    @patch("kdp_project.subprocess.run")
+    def test_pdfinfo_success_with_unparseable_output_fails_clearly(self, mocked_run, _which):
+        import kdp_project as project
+        mocked_run.return_value = SimpleNamespace(
+            returncode=0, stdout="not a pdfinfo report", stderr=""
+        )
+        with self.assertRaises(project.ProjectError) as raised:
+            project.page_geometry(self.pdf)
+        self.assertIn("could not report page size and page count", str(raised.exception))
+
+
 if __name__ == "__main__":
     unittest.main()
