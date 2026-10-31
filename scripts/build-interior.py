@@ -178,6 +178,8 @@ def main() -> int:
                             printing["bleed"])
     if args.no_parity:
         problems = [problem for problem in problems if "is odd" not in problem]
+    warnings = [problem for problem in problems if geo.is_warning(problem)]
+    problems = [problem for problem in problems if not geo.is_warning(problem)]
 
     print(f"\nwrote      {out.relative_to(cfg['root'])}")
     print(f"           {w / proj.PT:.3f} x {h / proj.PT:.3f} in, {pages} pages, "
@@ -185,6 +187,8 @@ def main() -> int:
 
     if args.no_parity and pages % 2:
         print("           proofing build only — odd page count is intentional")
+    for warning in warnings:
+        print(f"WARN       {warning}")
     if problems:
         print()
         for problem in problems:
