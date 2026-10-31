@@ -160,8 +160,7 @@ def main() -> int:
 
     for problem in geo.validate(pages, printing["trim"], printing["paper"],
                                 printing["bleed"]):
-        if ("not a KDP standard trim" in problem or "no spine text" in problem
-                or "page-count limit is not modelled" in problem):
+        if geo.is_warning(problem):
             warnings.append(problem)
         else:
             failures.append(problem)
