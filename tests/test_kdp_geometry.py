@@ -1,0 +1,121 @@
+"""Regression tests for the KDP plugin's pure-Python checks.
+
+Run from the repository root with:
+    python -m unittest discover -s tests -v
+"""
+
+import importlib.util
+import sys
+import unittest
+from pathlib import Path
+from types import SimpleNamespace
+from unittest.mock import patch
+
+ROOT = Path(__file__).resolve().parents[1]
+sys.path.insert(0, str(ROOT / "scripts"))
+
+import kdp_geometry as geo
+
+_spec = importlib.util.spec_from_file_location(
+    "kdp_preflight", ROOT / "scripts" / "preflight.py"
+)
+preflight = importlib.util.module_from_spec(_spec)
+_spec.loader.exec_module(preflight)
+
+
+class TrimTests(unittest.TestCase):
+    def test_standard_trim_is_case_and_space_tolerant(self):
+        self.assertEqual(geo.parse_trim(" 6 X 9 "), (6.0, 9.0))
+
+    def test_literal_nonstandard_trim(self):
+        self.assertEqual(geo.parse_trim("5.25x8.25"), (5.25, 8.25))
+        self.assertIsNone(geo.is_standard(5.25, 8.25))
+
+    def test_invalid_trim_without_separator(self):
+        with self.assertRaises(geo.GeometryError):
+            geo.parse_trim("6-by-9")
+
+    def test_invalid_trim_numbers(self):
+        with self.assertRaises(geo.GeometryError):
+            geo.parse_trim("sixx9")
+
+
+class GeometryTests(unittest.TestCase):
+    def test_spine_width_uses_selected_paper_caliper(self):
+        self.assertAlmostEqual(geo.spine_width(200, "cream-bw"), 0.5)
+        self.assertAlmostEqual(geo.spine_width(200, "white-bw"), 0.4504)
+
+    def test_unknown_paper_is_rejected(self):
+        with self.assertRaises(geo.GeometryError):
+            geo.spine_width(100, "unknown-paper")
+
+    def test_gutter_tier_boundaries(self):
+        expected = {
+            150: 0.375, 151: 0.500, 300: 0.500,
+            301: 0.625, 500: 0.625, 501: 0.750,
+            700: 0.750, 701: 0.875, 828: 0.875,
+        }
+        for pages, gutter in expected.items():
+            with self.subTest(pages=pages):
+                self.assertEqual(geo.min_gutter(pages), gutter)
+
+    def test_gutter_rejects_page_count_above_supported_limit(self):
+        with self.assertRaises(geo.GeometryError):
+            geo.min_gutter(829)
+
+    def test_recommended_margins_include_buffer(self):
+        margins = geo.recommended_margins(6, 9, 200)
+        self.assertEqual(
+            margins, {"inside": 0.75, "outside": 0.88, "top": 0.925, "bottom": 1.05}
+        )
+
+    def test_bleed_changes_interior_page_size(self):
+        no_bleed = geo.interior_geometry(200, "6x9", False)
+        with_bleed = geo.interior_geometry(200, "6x9", True)
+        self.assertEqual(no_bleed["page_size_in"], [6.0, 9.0])
+        self.assertEqual(with_bleed["page_size_in"], [6.125, 9.25])
+
+    def test_cover_dimensions_and_spine_text_threshold(self):
+        below = geo.cover_dimensions(78, "6x9", "cream-bw")
+        at_threshold = geo.cover_dimensions(80, "6x9", "cream-bw")
+        self.assertAlmostEqual(below["spine_in"], 0.195)
+        self.assertFalse(below["spine_text"]["printable"])
+        self.assertTrue(at_threshold["spine_text"]["printable"])
+        self.assertEqual(len(at_threshold["wrap_in"]), 2)
+
+    def test_validation_reports_minimum_and_odd_page_count(self):
+        problems = geo.validate(23)
+        self.assertTrue(any("under KDP's 24-page minimum" in p for p in problems))
+        self.assertTrue(any("is odd" in p for p in problems))
+
+    def test_validation_accepts_even_standard_extent(self):
+        self.assertEqual(geo.validate(200, "6x9", "cream-bw"), [])
+
+
+class PreflightCommandTests(unittest.TestCase):
+    @patch.object(preflight.subprocess, "run")
+    def test_run_returns_stdout_on_success(self, mocked_run):
+        mocked_run.return_value = SimpleNamespace(
+            returncode=0, stdout="PDF information", stderr=""
+        )
+        self.assertEqual(preflight.run(["pdfinfo", "book.pdf"]), "PDF information")
+
+    @patch.object(preflight.subprocess, "run")
+    def test_run_fails_with_command_diagnostic_on_nonzero_exit(self, mocked_run):
+        mocked_run.return_value = SimpleNamespace(
+            returncode=2, stdout="", stderr="file not found"
+        )
+        with self.assertRaises(SystemExit) as raised:
+            preflight.run(["pdfinfo", "missing.pdf"])
+        self.assertIn("exited with code 2", str(raised.exception))
+        self.assertIn("file not found", str(raised.exception))
+
+    @patch.object(preflight.subprocess, "run", side_effect=FileNotFoundError("not installed"))
+    def test_run_fails_clearly_when_command_is_missing(self, mocked_run):
+        with self.assertRaises(SystemExit) as raised:
+            preflight.run(["pdfinfo", "book.pdf"])
+        self.assertIn("could not run 'pdfinfo'", str(raised.exception))
+
+
+if __name__ == "__main__":
+    unittest.main()
