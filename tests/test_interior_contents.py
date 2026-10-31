@@ -29,7 +29,7 @@ class InteriorContentsTests(unittest.TestCase):
 
     def test_template_generates_outline_from_heading_levels_one_and_two(self):
         template = (ROOT / "templates" / "interior.typ").read_text(encoding="utf-8")
-        self.assertIn('outline(title: [Contents], depth: 2)', template)
+        self.assertIn('outline(title: none, depth: 2)', template)
         self.assertIn('sys.inputs.at("toc", default: "true")', template)
 
 
