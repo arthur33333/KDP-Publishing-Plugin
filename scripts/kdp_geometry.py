@@ -374,6 +374,13 @@ def _report(pages: int, trim: str, paper: str, bleed: bool) -> None:
 
     print(f"\n=== {pages} pages, {tw} x {th}in, {paper} ===")
     print(f"  trim               {'STANDARD (' + std + ')' if std else 'NON-STANDARD'}")
+    limits = page_limits(paper, trim)
+    if limits:
+        print(f"  page limits        {limits[0]}–{limits[1]} pages for this paper and trim")
+    elif paper == "standard-colour" and abs(tw - 8.27) < 0.01 and abs(th - 11.69) < 0.01:
+        print("  page limits        NOT AVAILABLE for standard colour on A4")
+    else:
+        print("  page limits        not modelled for this non-standard trim — verify KDP")
     print(f"  interior page      {inner['page_size_in'][0]} x {inner['page_size_in'][1]} in"
           f"{' (with bleed)' if bleed else ' (no bleed)'}")
     m = inner["margins_in"]
