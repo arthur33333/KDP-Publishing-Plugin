@@ -8,7 +8,7 @@ Set up a KDP paperback project here. Scope: $ARGUMENTS
 Use the `kdp-print-geometry` skill for the trim decision. In short:
 
 1. **Check the tools first.** `typst --version`, plus `pdfinfo -v`, `pdftotext -v`, `pdffonts -v` and `pdfimages -v` for Poppler.
-   Both are required and neither is worth discovering halfway through a build.
+   All are required and none is worth discovering halfway through a build.
 
 2. **Establish what the book is.** Ask only what you cannot infer: title, author,
    and whether there is an existing manuscript in this directory. Glob for
@@ -35,8 +35,10 @@ Use the `kdp-print-geometry` skill for the trim decision. In short:
    expanded distribution, then proceed with their choice.
 
 4. **Choose the paper.** `cream-bw` for prose, `white-bw` for anything with
-   figures or fine rules, colour only if the interior genuinely needs it. This
-   sets the spine caliper, so it has to be settled before a cover exists.
+   figures or fine rules, `groundwood-bw` only where the selected marketplace
+   offers it, and colour only if the interior genuinely needs it. Standard and
+   premium colour share the same KDP spine caliper; page limits still differ by
+   paper and trim. Set this before a cover exists.
 
 5. **Write the project.** Copy `${CLAUDE_PLUGIN_ROOT}/templates/book.toml` to
    `./book.toml` and fill in what you established. Copy `interior.typ` and
