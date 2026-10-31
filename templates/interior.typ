@@ -124,7 +124,9 @@
 // immediate sections, not every small subsection. Turn it off in book.toml for
 // books whose structure should not appear in a contents page.
 #if toc-on {
-  outline(title: [Contents], depth: 2)
+  align(center)[text(size: 18pt, weight: "bold")[Contents]]
+  v(1em)
+  outline(title: none, depth: 2)
   pagebreak(to: "odd", weak: true)
 }
 
