@@ -66,6 +66,36 @@ class ManuscriptReviewTests(unittest.TestCase):
                 "subheadings": 1,
             })
 
+    def test_detects_multiline_and_named_image_path(self):
+        findings = self.analyze(
+            '= Chapter One\n#image(\n  path: "images/missing.png",\n  width: 80%,\n)\nText\n'
+        )
+        self.assertTrue(any(item["code"] == "MISSING_IMAGE" and item["line"] == 2
+                            for item in findings))
+
+    def test_root_relative_image_path_is_checked_from_project_root(self):
+        with tempfile.TemporaryDirectory() as tmp:
+            root = Path(tmp)
+            (root / "images").mkdir()
+            (root / "images" / "diagram.png").write_bytes(b"test")
+            source = root / "chapters" / "body.typ"
+            source.parent.mkdir()
+            source.write_text('= Chapter One\n#image("/images/diagram.png")\nText\n',
+                              encoding="utf-8")
+            findings = review.analyze_file(source, root)
+            self.assertNotIn("MISSING_IMAGE", [item["code"] for item in findings])
+
+    def test_ignores_image_calls_inside_comments(self):
+        findings = self.analyze(
+            '= Chapter One\n/* #image("images/not-real.png") */\n'
+            '// #image("images/also-not-real.png")\nText\n'
+        )
+        self.assertNotIn("MISSING_IMAGE", [item["code"] for item in findings])
+
+    def test_warns_about_absolute_windows_image_paths(self):
+        findings = self.analyze('= Chapter One\n#image("C:/book/images/a.png")\nText\n')
+        self.assertIn("NON_PORTABLE_IMAGE_PATH", [item["code"] for item in findings])
+
     def test_directory_finds_typst_sources_recursively(self):
         with tempfile.TemporaryDirectory() as tmp:
             root = Path(tmp)
