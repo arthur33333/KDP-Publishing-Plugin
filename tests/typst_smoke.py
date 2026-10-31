@@ -163,10 +163,11 @@ categories = ["Reference"]
 
         run([sys.executable, str(ROOT / "scripts" / "preflight.py"),
              "--project", str(root)], cwd=ROOT)
+        package = root / "dist" / "kdp-upload"
+        package.mkdir(parents=True, exist_ok=True)
+        (package / "obsolete-stale-cover.pdf").write_text("stale", encoding="utf-8")
         run([sys.executable, str(ROOT / "scripts" / "kdp-package.py"),
              "--project", str(root)], cwd=ROOT)
-
-        package = root / "dist" / "kdp-upload"
         required = {
             "description.txt", "title.txt", "specs.txt", "README.txt",
             "listing-review.txt",
@@ -174,6 +175,8 @@ categories = ["Reference"]
         missing = sorted(name for name in required if not (package / name).is_file())
         if missing:
             raise RuntimeError(f"Upload package is missing files: {missing}")
+        if (package / "obsolete-stale-cover.pdf").exists():
+            raise RuntimeError("The upload package retained a stale file from a previous build.")
         if not any(path.name.endswith("-interior.pdf") for path in package.iterdir()):
             raise RuntimeError("Upload package is missing the interior PDF.")
         if not any(path.name.endswith("-cover.pdf") for path in package.iterdir()):
