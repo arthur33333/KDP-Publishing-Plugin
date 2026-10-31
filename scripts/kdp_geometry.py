@@ -9,10 +9,10 @@ Every other script in this plugin imports this module rather than carrying its o
 copy of the numbers. That is the point: a caliper or a bleed figure written down in
 two places is a caliper that will disagree with itself the first time KDP moves it.
 
-FIGURES VERIFIED AGAINST KDP'S OWN HELP PAGES ON 2026-08-12. KDP changes these
-without notice and without a changelog. `reference/` carries the source URL and the
-verification date for each table; re-check before any upload that matters and move
-the date when you do.
+PAPER CALIPERS, PAGE LIMITS AND GUTTER FIGURES RE-VERIFIED ON 2026-10-31;
+standard trim names last checked 2026-08-12. KDP changes these without notice and
+without a changelog. `reference/` carries the source URL and verification date for
+each table; re-check before any upload that matters and move the date when you do.
 
 WHY THE US STANDARD SIZES ARE PRIVILEGED. KDP splits paperback trims into "standard"
 and "non-standard". Standard sizes are available in every marketplace, are the only
@@ -72,12 +72,12 @@ TRIM_NOTES: dict[str, str] = {
 
 # --- Paper -------------------------------------------------------------------
 #
-# Per-page caliper in inches. Spine width is page count x caliper, full stop —
-# KDP publishes no minimum and no rounding rule for paperback. Verified 2026-08-12.
+# Per-page caliper in inches. Verified against KDP paperback cover specifications on 2026-10-31.
 PAPER_CALIPER: dict[str, float] = {
     "white-bw":        0.002252,
     "cream-bw":        0.0025,
-    "standard-colour": 0.002252,
+    "groundwood-bw":   0.00235,
+    "standard-colour": 0.002347,
     "premium-colour":  0.002347,
 }
 DEFAULT_PAPER = "cream-bw"
@@ -85,8 +85,44 @@ DEFAULT_PAPER = "cream-bw"
 PAPER_NOTES: dict[str, str] = {
     "white-bw":        "B&W on white. Cheapest. Higher contrast; can glare across long text.",
     "cream-bw":        "B&W on cream. Easier on the eye over hundreds of pages. Standard for prose.",
-    "standard-colour": "Colour, standard ink. Much more expensive per page.",
+    "groundwood-bw":   "B&W on groundwood paper. Availability depends on marketplace.",
+    "standard-colour": "Colour, standard ink. Lower-cost colour printing.",
     "premium-colour":  "Colour, premium ink. Photo-grade, most expensive.",
+}
+
+STANDARD_PAGE_LIMITS: dict[str, tuple[int, int]] = {
+    "white-bw": (24, 828),
+    "cream-bw": (24, 776),
+    "groundwood-bw": (24, 812),
+    "standard-colour": (72, 600),
+    "premium-colour": (24, 828),
+}
+PAGE_LIMIT_OVERRIDES: dict[str, dict[str, tuple[int, int] | None]] = {
+    "8.25x6": {
+        "white-bw": (24, 800), "cream-bw": (24, 750),
+        "groundwood-bw": (24, 784), "standard-colour": (72, 600),
+        "premium-colour": (24, 800),
+    },
+    "8.25x8.25": {
+        "white-bw": (24, 800), "cream-bw": (24, 750),
+        "groundwood-bw": (24, 784), "standard-colour": (72, 600),
+        "premium-colour": (24, 800),
+    },
+    "8.27x11.69": {
+        "white-bw": (24, 780), "cream-bw": (24, 730),
+        "groundwood-bw": (24, 764), "standard-colour": None,
+        "premium-colour": (24, 590),
+    },
+    "8.5x8.5": {
+        "white-bw": (24, 590), "cream-bw": (24, 550),
+        "groundwood-bw": (24, 578), "standard-colour": (72, 600),
+        "premium-colour": (24, 590),
+    },
+    "8.5x11": {
+        "white-bw": (24, 590), "cream-bw": (24, 550),
+        "groundwood-bw": (24, 578), "standard-colour": (72, 600),
+        "premium-colour": (24, 590),
+    },
 }
 
 # --- Fixed KDP figures -------------------------------------------------------
@@ -96,7 +132,7 @@ SAFE_ZONE = 0.25         # KDP's minimum clearance from the trim line for cover 
 SPINE_TEXT_MIN_PAGES = 80  # KDP prints no spine text at or below 79 pages
 SPINE_TEXT_CLEARANCE = 0.0625  # KDP's stated minimum type-to-fold clearance
 PAGE_MIN = 24
-PAGE_MAX = 828           # B&W; colour interiors cap lower, see reference/trim-sizes.md
+PAGE_MAX = 828           # Global maximum envelope; use page_limits() for actual limits.
 DESCRIPTION_MAX = 4000
 KEYWORDS_MAX = 7
 CATEGORIES_MAX = 3
@@ -104,7 +140,7 @@ PT = 72.0                # PostScript points per inch
 
 # Minimum INSIDE margin (gutter) by page count. KDP states these as hard minimums;
 # going under them pulls text into the bind on every page of the book, which is
-# invisible in a PDF viewer and obvious in a proof copy. Verified 2026-08-12.
+# invisible in a PDF viewer and obvious in a proof copy. Verified 2026-10-31.
 GUTTER_TIERS: list[tuple[int, float]] = [
     (150, 0.375),
     (300, 0.500),
@@ -147,6 +183,28 @@ def is_standard(trim_w: float, trim_h: float, tol: float = 0.01) -> str | None:
         if abs(w - trim_w) < tol and abs(h - trim_h) < tol:
             return key
     return None
+
+
+def page_limits(paper: str, trim: str = DEFAULT_TRIM) -> tuple[int, int] | None:
+    """Return the KDP US paperback page limits for a paper and trim.
+
+    None means the combination is unavailable or its limit is not modelled for
+    this non-standard trim. validate() distinguishes the known unavailable case.
+    """
+    if paper not in STANDARD_PAGE_LIMITS:
+        raise GeometryError(
+            f"unknown paper {paper!r}; one of {', '.join(STANDARD_PAGE_LIMITS)}"
+        )
+
+    trim_w, trim_h = parse_trim(trim)
+    for key, limits_by_paper in PAGE_LIMIT_OVERRIDES.items():
+        override_w, override_h = parse_trim(key)
+        if abs(trim_w - override_w) < 0.01 and abs(trim_h - override_h) < 0.01:
+            return limits_by_paper[paper]
+
+    if is_standard(trim_w, trim_h) is None:
+        return None
+    return STANDARD_PAGE_LIMITS[paper]
 
 
 def spine_width(pages: int, paper: str = DEFAULT_PAPER) -> float:
@@ -234,7 +292,7 @@ def cover_dimensions(pages: int, trim: str = DEFAULT_TRIM,
 
 
 def interior_geometry(pages: int, trim: str = DEFAULT_TRIM,
-                      bleed: bool = False) -> dict:
+                      bleed: bool = False, paper: str = DEFAULT_PAPER) -> dict:
     """Interior page geometry, including the page size to hand Typst."""
     trim_w, trim_h = parse_trim(trim)
     margins = recommended_margins(trim_w, trim_h, pages, bleed)
@@ -244,16 +302,19 @@ def interior_geometry(pages: int, trim: str = DEFAULT_TRIM,
     page_w = trim_w + BLEED if bleed else trim_w
     page_h = trim_h + 2 * BLEED if bleed else trim_h
 
+    limits = page_limits(paper, trim)
     return {
         "pages": pages,
         "trim": {"w": trim_w, "h": trim_h, "standard": is_standard(trim_w, trim_h)},
+        "paper": paper,
+        "page_limits": list(limits) if limits else None,
         "bleed": bleed,
         "page_size_in": [round(page_w, 4), round(page_h, 4)],
         "margins_in": margins,
         "min_gutter_in": min_gutter(pages),
         "measure_in": round(trim_w - margins["inside"] - margins["outside"], 4),
         "even_pages": pages % 2 == 0,
-        "within_page_limits": PAGE_MIN <= pages <= PAGE_MAX,
+        "within_page_limits": (limits[0] <= pages <= limits[1]) if limits else None,
     }
 
 
@@ -268,10 +329,24 @@ def validate(pages: int, trim: str = DEFAULT_TRIM, paper: str = DEFAULT_PAPER,
             f"{trim_w} x {trim_h}in is not a KDP standard trim — it will still print, "
             f"but expanded distribution and some marketplaces may refuse it"
         )
-    if pages < PAGE_MIN:
-        problems.append(f"{pages} pages is under KDP's {PAGE_MIN}-page minimum")
-    if pages > PAGE_MAX:
-        problems.append(f"{pages} pages is over KDP's {PAGE_MAX}-page B&W limit")
+    limits = page_limits(paper, trim)
+    if limits is None:
+        if (paper == "standard-colour" and abs(trim_w - 8.27) < 0.01
+                and abs(trim_h - 11.69) < 0.01):
+            problems.append(
+                "standard colour ink is not available for the 8.27 x 11.69in A4 trim"
+            )
+        else:
+            problems.append(
+                f"page-count limit is not modelled for non-standard trim "
+                f"{trim_w} x {trim_h}in; verify the current KDP table before upload"
+            )
+    else:
+        minimum, maximum = limits
+        if pages < minimum:
+            problems.append(f"{pages} pages is under KDP's {minimum}-page minimum for {paper}")
+        if pages > maximum:
+            problems.append(f"{pages} pages is over KDP's {maximum}-page maximum for {paper} at {trim}")
     if pages % 2:
         problems.append(f"{pages} pages is odd; KDP interiors need an even leaf count")
     if pages < SPINE_TEXT_MIN_PAGES:
@@ -282,14 +357,30 @@ def validate(pages: int, trim: str = DEFAULT_TRIM, paper: str = DEFAULT_PAPER,
     return problems
 
 
+def is_warning(problem: str) -> bool:
+    """Whether a geometry finding is advisory rather than a publishing blocker."""
+    return (
+        "not a KDP standard trim" in problem
+        or "no spine text" in problem
+        or "page-count limit is not modelled" in problem
+    )
+
+
 def _report(pages: int, trim: str, paper: str, bleed: bool) -> None:
     cover = cover_dimensions(pages, trim, paper)
-    inner = interior_geometry(pages, trim, bleed)
+    inner = interior_geometry(pages, trim, bleed, paper)
     tw, th = cover["trim"]["w"], cover["trim"]["h"]
     std = cover["trim"]["standard"]
 
     print(f"\n=== {pages} pages, {tw} x {th}in, {paper} ===")
     print(f"  trim               {'STANDARD (' + std + ')' if std else 'NON-STANDARD'}")
+    limits = page_limits(paper, trim)
+    if limits:
+        print(f"  page limits        {limits[0]}–{limits[1]} pages for this paper and trim")
+    elif paper == "standard-colour" and abs(tw - 8.27) < 0.01 and abs(th - 11.69) < 0.01:
+        print("  page limits        NOT AVAILABLE for standard colour on A4")
+    else:
+        print("  page limits        not modelled for this non-standard trim — verify KDP")
     print(f"  interior page      {inner['page_size_in'][0]} x {inner['page_size_in'][1]} in"
           f"{' (with bleed)' if bleed else ' (no bleed)'}")
     m = inner["margins_in"]
@@ -307,7 +398,8 @@ def _report(pages: int, trim: str, paper: str, bleed: bool) -> None:
           if st["printable"] else f"  spine text         NOT PRINTABLE — {st['reason']}")
 
     for problem in validate(pages, trim, paper, bleed):
-        print(f"  !! {problem}")
+        level = "WARN" if is_warning(problem) else "!!"
+        print(f"  {level} {problem}")
 
 
 def main() -> int:
@@ -342,7 +434,7 @@ def main() -> int:
     if args.json:
         print(json.dumps({
             "cover": cover_dimensions(args.pages, args.trim, args.paper),
-            "interior": interior_geometry(args.pages, args.trim, args.bleed),
+            "interior": interior_geometry(args.pages, args.trim, args.bleed, args.paper),
             "problems": validate(args.pages, args.trim, args.paper, args.bleed),
         }, indent=2))
         return 0

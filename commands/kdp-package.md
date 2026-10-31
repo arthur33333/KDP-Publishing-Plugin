@@ -9,8 +9,8 @@ python3 ${CLAUDE_PLUGIN_ROOT}/scripts/kdp-package.py
 ```
 
 Writes `dist/kdp-upload/`: the interior PDF, the cover PDF, the description as
-plain text, and `title.txt`, `specs.txt` and `README.txt` naming exactly what goes
-in which field.
+plain text, `listing-review.txt` with advisory checks, and `title.txt`, `specs.txt`
+and `README.txt` naming what goes in which field.
 
 **Nothing in that folder is authored.** The description comes from the project's
 description file, the targeting from `[listing]` in `book.toml`, the identity from

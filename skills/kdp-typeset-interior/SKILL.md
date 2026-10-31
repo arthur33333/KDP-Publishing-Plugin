@@ -28,6 +28,46 @@ template; the second pass derives them from the first pass's measured extent. A
 book sitting exactly on a tier boundary can need a third pass, and the script
 handles that.
 
+## Automatic table of contents
+
+The interior template generates a contents page from Typst headings before the
+manuscript body is typeset. Heading levels 1 and 2 are included, with page
+references linked to the corresponding sections. It is enabled by default and
+can be disabled in `book.toml`:
+
+```toml
+[interior]
+table_of_contents = false
+```
+
+Use Typst heading markup (`= Chapter title`, `== Section title`) in the body
+source; plain bold paragraphs are not structural headings and will not appear.
+
+The title page is unnumbered. Contents pages use lower-case Roman numerals, and
+the manuscript body restarts at Arabic page 1. Page numbers remain centered in
+the footer. The contents page uses actual heading locations, so its references
+follow the final layout after the build script has completed its margin and
+parity passes.
+
+## Images and figures
+
+Keep image files beside the manuscript source in a folder such as `images/` and
+reference them with a project-relative path from that `.typ` file. Use a figure
+and `fit: "contain"` so illustrations scale to the available text width without
+distortion or margin overflow:
+
+```typst
+#figure(
+  image("images/diagram.png", width: 100%, fit: "contain", alt: "Short description"),
+  caption: [Diagram caption],
+)
+```
+
+The manuscript review checks literal image paths, including multiline calls and
+project-root paths. It ignores comments and flags missing files or absolute
+Windows paths. Dynamic image paths cannot be resolved statically and are not
+claimed to be checked.
+
 ## Where the text lives
 
 `[paths].body` in `book.toml`. A single `.typ` file or a directory of them.

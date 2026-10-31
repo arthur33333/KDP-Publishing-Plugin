@@ -30,7 +30,7 @@ contributors = []
 # rather than refuse — but it should be a decision, not a typo.
 trim = "6x9"
 
-# white-bw | cream-bw | standard-colour | premium-colour
+# white-bw | cream-bw | groundwood-bw | standard-colour | premium-colour
 # This sets the spine width, via the per-page caliper. Whatever is chosen here
 # must be selected in the KDP form too, or the spine KDP expects stops matching
 # the cover that was built.
@@ -60,6 +60,10 @@ fonts = "assets/fonts"
 description = "listing/description.txt"
 dist = "dist"
 
+
+[interior]
+# Generate a contents page from manuscript headings. Set false to omit it.
+table_of_contents = true
 
 [listing]
 # Chosen values only. Anything measurable — page count, trim, spine — is read

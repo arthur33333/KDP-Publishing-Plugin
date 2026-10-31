@@ -22,7 +22,7 @@ The only reliable signal is to enumerate every codepoint in the source, confirm
 each one survives the round trip into the PDF, and list which fonts actually got
 embedded so an unexpected substitution is visible before the proof copy is.
 
-Needs poppler-utils: pdftotext, pdffonts, pdfinfo.
+Needs poppler-utils: pdfinfo, pdftotext, pdffonts, pdfimages.
 """
 
 from __future__ import annotations
@@ -40,13 +40,85 @@ sys.path.insert(0, str(Path(__file__).resolve().parent))
 
 import kdp_geometry as geo  # noqa: E402
 import kdp_project as proj  # noqa: E402
+import listing_audit  # noqa: E402
 
 # Source extensions worth reading for a codepoint corpus.
 BODY_SUFFIXES = {".typ", ".md", ".txt", ".json", ".yaml", ".yml", ".toml"}
 
 
 def run(cmd: list[str]) -> str:
-    return subprocess.run(cmd, capture_output=True, text=True).stdout
+    """Run a Poppler command and fail clearly instead of treating errors as empty output."""
+    try:
+        result = subprocess.run(
+            cmd, capture_output=True, text=True, errors="replace", check=False
+        )
+    except OSError as err:
+        raise SystemExit(f"! could not run {cmd[0]!r}: {err}") from err
+
+    if result.returncode != 0:
+        detail = result.stderr.strip() or result.stdout.strip() or "no diagnostic output"
+        raise SystemExit(
+            f"! {cmd[0]} exited with code {result.returncode}: {detail}"
+        )
+    return result.stdout
+
+
+def parse_pdf_image_resolutions(output: str) -> list[dict]:
+    """Parse image pixel dimensions and effective PPI from pdfimages -list output."""
+    records: list[dict] = []
+    for line in output.splitlines():
+        parts = line.split()
+        if len(parts) < 14 or not parts[0].isdigit() or not parts[1].isdigit():
+            continue
+        if parts[2] != "image":
+            continue
+        try:
+            records.append({
+                "page": int(parts[0]),
+                "image": int(parts[1]),
+                "width_px": int(parts[3]),
+                "height_px": int(parts[4]),
+                "x_ppi": float(parts[12]),
+                "y_ppi": float(parts[13]),
+            })
+        except (ValueError, IndexError):
+            continue
+    return records
+
+
+def classify_image_resolutions(records: list[dict], label: str,
+                               minimum_ppi: float = 300,
+                               recommended_max_ppi: float = 600) -> tuple[list[str], list[str]]:
+    """Return hard resolution failures and high-resolution advisory warnings."""
+    failures: list[str] = []
+    warnings: list[str] = []
+    for item in records:
+        low = min(item["x_ppi"], item["y_ppi"])
+        high = max(item["x_ppi"], item["y_ppi"])
+        where = f"{label} image {item['image']} on page {item['page']}"
+        if low < minimum_ppi:
+            failures.append(
+                f"{where} is {item['x_ppi']:.0f} x {item['y_ppi']:.0f} PPI; "
+                f"KDP requires at least {minimum_ppi:.0f} PPI"
+            )
+        elif high > recommended_max_ppi:
+            warnings.append(
+                f"{where} is {item['x_ppi']:.0f} x {item['y_ppi']:.0f} PPI; "
+                f"KDP recommends staying at or below {recommended_max_ppi:.0f} PPI "
+                "to avoid unnecessarily large PDFs"
+            )
+    return failures, warnings
+
+
+def cover_height_mismatch(actual_height_in: float, expected_height_in: float,
+                         tolerance: float = 0.02) -> str | None:
+    """Return a diagnostic when the cover PDF height differs from its required wrap."""
+    if abs(actual_height_in - expected_height_in) <= tolerance:
+        return None
+    return (
+        f"cover height is {actual_height_in:.4f}in but the full wrap needs "
+        f"{expected_height_in:.4f}in — check the cover template and rebuild it"
+    )
 
 
 # Running commentary goes to stderr under --json, so stdout stays a single
@@ -100,7 +172,7 @@ def main() -> int:
     if not interior.exists():
         sys.exit("! dist/interior.pdf missing — run build-interior.py first")
 
-    for tool in ("pdftotext", "pdffonts"):
+    for tool in ("pdftotext", "pdffonts", "pdfimages"):
         if not shutil.which(tool):
             sys.exit(f"! {tool} not on PATH — install poppler-utils")
 
@@ -111,7 +183,7 @@ def main() -> int:
     # --- geometry ------------------------------------------------------------
     iw, ih, pages = proj.page_geometry(interior)
     trim_w, trim_h = geo.parse_trim(printing["trim"])
-    expected = geo.interior_geometry(pages, printing["trim"], printing["bleed"])
+    expected = geo.interior_geometry(pages, printing["trim"], printing["bleed"], printing["paper"])
     want_w, want_h = expected["page_size_in"]
 
     say(f"title           {book['title']}")
@@ -135,7 +207,7 @@ def main() -> int:
 
     for problem in geo.validate(pages, printing["trim"], printing["paper"],
                                 printing["bleed"]):
-        if "not a KDP standard trim" in problem or "no spine text" in problem:
+        if geo.is_warning(problem):
             warnings.append(problem)
         else:
             failures.append(problem)
@@ -237,6 +309,9 @@ def main() -> int:
                 f"cover spine is {measured_spine:.4f}in but {pages} pages needs "
                 f"{dims['spine_in']:.4f}in — this cover is stale, rebuild it"
             )
+        height_error = cover_height_mismatch(ch / proj.PT, dims["wrap_in"][1])
+        if height_error:
+            failures.append(height_error)
         report["cover"] = {
             "wrap_in": [round(cw / proj.PT, 4), round(ch / proj.PT, 4)],
             "measured_spine_in": round(measured_spine, 4),
@@ -246,6 +321,24 @@ def main() -> int:
         say("cover           not built yet — build it last, against these "
               f"{pages} pages")
         report["cover"] = None
+
+    # --- image resolution ----------------------------------------------------
+    image_reports: dict[str, list[dict]] = {}
+    image_pdfs = [("interior", interior)]
+    if cover.exists():
+        image_pdfs.append(("cover", cover))
+    for label, pdf_path in image_pdfs:
+        image_records = parse_pdf_image_resolutions(
+            run(["pdfimages", "-list", str(pdf_path)])
+        )
+        image_reports[label] = image_records
+        image_failures, image_warnings = classify_image_resolutions(
+            image_records, label
+        )
+        failures.extend(image_failures)
+        warnings.extend(image_warnings)
+        say(f"{label + ' images':16} {len(image_records)} raster image(s) checked")
+    report["images"] = image_reports
 
     # --- listing -------------------------------------------------------------
     description = root / paths["description"]
@@ -271,6 +364,18 @@ def main() -> int:
             'an exact match and the book stops surfacing for anything less than all '
             'of it'
         )
+
+    listing_warnings = listing_audit.audit_listing(
+        description.read_text(encoding="utf-8") if description.is_file() else "",
+        keywords,
+        categories,
+    )
+    warnings.extend(listing_warnings)
+    report["listing"] = {
+        "keyword_count": len(keywords),
+        "category_count": len(categories),
+        "audit_warnings": listing_warnings,
+    }
 
     # --- verdict -------------------------------------------------------------
     report["failures"], report["warnings"] = failures, warnings

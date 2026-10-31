@@ -1,6 +1,6 @@
 ---
 name: kdp-preflight
-description: Verify a built KDP book mechanically before upload — trim, page parity, gutter against the tiered minimum, font round-trip for silent glyph substitution, and the cover's spine against the interior's real extent. Use before any upload, after any rebuild, and when deciding whether a book is actually ready to print.
+description: Verify a built KDP book mechanically before upload — trim, page parity, gutter, raster image resolution, font round-trip, listing and cover spine. Use before any upload, after any rebuild, and when deciding whether a book is actually ready to print.
 ---
 
 # Pre-flight
@@ -54,6 +54,11 @@ into the PDF via `pdftotext`, and lists the fonts actually embedded via
 `pdffonts`. A substitution reported here is not necessarily a failure — the
 fallback is why there is no tofu on the page — but it becomes *visible* and
 deliberate rather than discovered in print.
+
+**Raster image resolution.** `pdfimages -list` reports effective PPI after images
+have been placed in the PDF. Anything below 300 PPI fails; anything above 600
+PPI is a warning because unnecessarily large images can slow processing. This
+is more useful than checking source file dimensions alone.
 
 **Cover spine against the interior's extent.** The second of the two independent
 routes to the same fact. `build-cover.py` measured the interior going in; this

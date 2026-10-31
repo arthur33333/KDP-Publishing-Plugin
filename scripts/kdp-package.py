@@ -17,13 +17,15 @@ WHAT IT CHECKS, AND WHY EACH CHECK EXISTS
   - The interior really is the trim book.toml claims. KDP will accept a file at
     the wrong trim and print the book with the wrong margins. Nobody sees that
     until the proof arrives.
-  - The page count is even, and the spine on the built cover matches THAT page
+  - The page count is within supported limits and even, and the spine on the built cover matches THAT page
     count rather than a stale one. This is the second of the two independent
     checks on the cover: build-cover.py measured the interior on the way in, this
     measures the finished wrap on the way out and subtracts both faces and both
     bleeds to see what is left. A cover has to defeat both to reach the printer.
   - The description fits KDP's 4,000-character field.
   - Keywords and categories are within KDP's limits and contain no quotation marks.
+  - Advisory listing-review warnings are included for manual review.
+  - A previous upload folder is cleared so obsolete PDFs cannot survive a rebuild.
   - The title's display line-breaks join back to the title exactly. KDP will not
     let the title be edited more than 72 hours after publication and requires it
     to read exactly as the cover prints it.
@@ -45,6 +47,7 @@ sys.path.insert(0, str(Path(__file__).resolve().parent))
 
 import kdp_geometry as geo  # noqa: E402
 import kdp_project as proj  # noqa: E402
+import listing_audit  # noqa: E402
 
 
 def slug(text: str) -> str:
@@ -69,6 +72,9 @@ def main() -> int:
     cover = dist / "cover.pdf"
     description_src = root / paths["description"]
     out = dist / "kdp-upload"
+    # Never leave an older upload package available after a failed rebuild.
+    if out.exists():
+        shutil.rmtree(out)
     stem = slug(book["title"])
 
     missing = [str(p.relative_to(root)) for p in (interior, description_src)
@@ -86,15 +92,21 @@ def main() -> int:
         # Only meaningful for a no-bleed interior; a bleed interior is legitimately
         # larger than trim, and interior_geometry() knows by how much.
         want_w, want_h = geo.interior_geometry(
-            pages, printing["trim"], printing["bleed"])["page_size_in"]
+            pages, printing["trim"], printing["bleed"], printing["paper"])["page_size_in"]
         if abs(iw / proj.PT - want_w) > 0.03 or abs(ih / proj.PT - want_h) > 0.03:
             print(f"! interior is {iw / proj.PT:.3f} x {ih / proj.PT:.3f}in, not the "
                   f"{want_w} x {want_h}in this book is specified at", file=sys.stderr)
             return 1
 
-    if pages % 2:
-        print(f"! interior is {pages} pages, odd — build-interior.py pads parity on a "
-              f"second pass, so this file is stale. Rebuild.", file=sys.stderr)
+    geometry_problems = geo.validate(
+        pages, printing["trim"], printing["paper"], printing["bleed"]
+    )
+    blocking_geometry = [problem for problem in geometry_problems if not geo.is_warning(problem)]
+    if blocking_geometry:
+        for problem in blocking_geometry:
+            print(f"! {problem}", file=sys.stderr)
+        print("  rebuild the interior and resolve the print geometry before packaging.",
+              file=sys.stderr)
         return 1
 
     description = description_src.read_text(encoding="utf-8").strip()
@@ -114,13 +126,32 @@ def main() -> int:
         print(f"! {len(categories)} categories; KDP takes {geo.CATEGORIES_MAX}",
               file=sys.stderr)
         return 1
-    if any('"' in k for k in keywords):
+    if any(isinstance(k, str) and '"' in k for k in keywords):
         print("! a keyword contains a quotation mark — KDP treats the quoted phrase "
               "as an exact match and the book stops surfacing for anything less",
               file=sys.stderr)
         return 1
 
+    listing_warnings = listing_audit.audit_listing(
+        description, keywords, categories
+    )
+
     out.mkdir(parents=True, exist_ok=True)
+    listing_review = [
+        f"LISTING REVIEW — {book['title']}",
+        "=" * 68,
+        "",
+        "These are automated review suggestions, not a KDP approval decision.",
+        "Check current KDP guidance and review each suggestion yourself.",
+        "",
+    ]
+    if listing_warnings:
+        listing_review.extend(f"WARN  {warning}" for warning in listing_warnings)
+    else:
+        listing_review.append("No common listing issues detected by the local checks.")
+    (out / "listing-review.txt").write_text(
+        "\n".join(listing_review) + "\n", encoding="utf-8"
+    )
     shutil.copy2(interior, out / f"{stem}-interior.pdf")
     (out / "description.txt").write_text(description + "\n", encoding="utf-8")
 
@@ -139,6 +170,14 @@ def main() -> int:
         if abs(measured - dims["spine_in"]) > 0.01:
             print(f"! cover spine measures {measured:.4f}in but {pages} pages needs "
                   f"{dims['spine_in']:.4f}in — this cover is stale", file=sys.stderr)
+            return 1
+        expected_wrap_height = dims["wrap_in"][1]
+        if abs(ch / proj.PT - expected_wrap_height) > 0.02:
+            print(
+                f"! cover height is {ch / proj.PT:.4f}in but the wrap needs "
+                f"{expected_wrap_height:.4f}in — rebuild the cover",
+                file=sys.stderr,
+            )
             return 1
         if cpages != 1:
             print(f"! cover is {cpages} pages; KDP wants one page carrying back, "
@@ -188,6 +227,7 @@ def main() -> int:
         "white-bw": "Black & white on white paper",
         "cream-bw": "Black & white on cream paper",
         "standard-colour": "Standard colour",
+        "groundwood-bw": "Black & white on groundwood paper",
         "premium-colour": "Premium colour",
     }[printing["paper"]]
 
@@ -253,7 +293,7 @@ Keywords ({len(keywords)} of {geo.KEYWORDS_MAX}):
 """, encoding="utf-8")
 
     margins = geo.interior_geometry(
-        pages, printing["trim"], printing["bleed"])["margins_in"]
+        pages, printing["trim"], printing["bleed"], printing["paper"])["margins_in"]
 
     (out / "README.txt").write_text(f"""KDP UPLOAD — {book['title']}
 {'=' * 68}

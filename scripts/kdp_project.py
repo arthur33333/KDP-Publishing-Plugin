@@ -157,13 +157,32 @@ def page_geometry(pdf: Path) -> tuple[float, float, int]:
     if not pdf.exists():
         raise ProjectError(f"{pdf} does not exist — build it first")
 
-    if shutil.which("pdfinfo"):
-        out = subprocess.run(["pdfinfo", str(pdf)],
-                             capture_output=True, text=True).stdout
-        size = re.search(r"^Page size:\s+([\d.]+) x ([\d.]+)", out, re.M)
-        pages = re.search(r"^Pages:\s+(\d+)", out, re.M)
-        if size and pages:
-            return float(size.group(1)), float(size.group(2)), int(pages.group(1))
+    pdfinfo = shutil.which("pdfinfo")
+    if pdfinfo:
+        try:
+            result = subprocess.run(
+                [pdfinfo, str(pdf)],
+                capture_output=True,
+                text=True,
+                errors="replace",
+                check=False,
+            )
+        except OSError as err:
+            raise ProjectError(f"could not run pdfinfo for {pdf.name}: {err}") from err
+
+        if result.returncode != 0:
+            detail = result.stderr.strip() or result.stdout.strip() or "no diagnostic output"
+            raise ProjectError(
+                f"pdfinfo failed for {pdf.name} (exit {result.returncode}): {detail}"
+            )
+
+        size = re.search(r"^Page size:\s+([\d.]+) x ([\d.]+)", result.stdout, re.M)
+        pages = re.search(r"^Pages:\s+(\d+)", result.stdout, re.M)
+        if not size or not pages:
+            raise ProjectError(
+                f"pdfinfo could not report page size and page count for {pdf.name}"
+            )
+        return float(size.group(1)), float(size.group(2)), int(pages.group(1))
 
     data = pdf.read_bytes()
     box = re.search(
