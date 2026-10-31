@@ -46,6 +46,49 @@ class GeometryTests(unittest.TestCase):
         self.assertAlmostEqual(geo.spine_width(200, "cream-bw"), 0.5)
         self.assertAlmostEqual(geo.spine_width(200, "white-bw"), 0.4504)
 
+    def test_colour_spine_uses_kdp_colour_caliper(self):
+        self.assertAlmostEqual(geo.spine_width(100, "standard-colour"), 0.2347)
+        self.assertAlmostEqual(geo.spine_width(100, "premium-colour"), 0.2347)
+
+    def test_groundwood_spine_uses_kdp_caliper(self):
+        self.assertAlmostEqual(geo.spine_width(100, "groundwood-bw"), 0.235)
+
+    def test_paper_specific_page_limits_for_standard_trims(self):
+        self.assertEqual(geo.page_limits("white-bw", "6x9"), (24, 828))
+        self.assertEqual(geo.page_limits("cream-bw", "6x9"), (24, 776))
+        self.assertEqual(geo.page_limits("groundwood-bw", "6x9"), (24, 812))
+        self.assertEqual(geo.page_limits("standard-colour", "6x9"), (72, 600))
+        self.assertEqual(geo.page_limits("premium-colour", "6x9"), (24, 828))
+
+    def test_eight_and_a_half_by_eleven_has_lower_page_ceiling(self):
+        self.assertEqual(geo.page_limits("white-bw", "8.5x11"), (24, 590))
+        self.assertEqual(geo.page_limits("cream-bw", "8.5x11"), (24, 550))
+        self.assertEqual(geo.page_limits("standard-colour", "8.5x11"), (72, 600))
+        self.assertEqual(geo.page_limits("premium-colour", "8.5x11"), (24, 590))
+
+    def test_a4_standard_colour_is_unavailable(self):
+        self.assertIsNone(geo.page_limits("standard-colour", "8.27x11.69"))
+        self.assertTrue(any(
+            "not available" in item
+            for item in geo.validate(200, "8.27x11.69", "standard-colour")
+        ))
+
+    def test_unknown_nonstandard_page_ceiling_is_advisory(self):
+        problems = geo.validate(200, "5.25x8.25", "cream-bw")
+        self.assertTrue(any(geo.is_warning(item) and "not modelled" in item
+                            for item in problems))
+
+    def test_valid_short_book_only_warns_about_spine_text(self):
+        problems = geo.validate(40, "6x9", "cream-bw")
+        self.assertFalse([item for item in problems if not geo.is_warning(item)])
+        self.assertTrue(any("no spine text" in item for item in problems))
+
+    def test_cream_page_limit_is_enforced(self):
+        self.assertTrue(any(
+            "over KDP's 776-page maximum" in item
+            for item in geo.validate(778, "6x9", "cream-bw")
+        ))
+
     def test_unknown_paper_is_rejected(self):
         with self.assertRaises(geo.GeometryError):
             geo.spine_width(100, "unknown-paper")
