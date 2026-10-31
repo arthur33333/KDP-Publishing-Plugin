@@ -138,7 +138,7 @@ quote the date alongside the number rather than presenting it as current.
 ## Requirements
 
 - [`typst`](https://github.com/typst/typst) on PATH
-- `poppler-utils` — `pdfinfo`, `pdftotext`, `pdffonts`
+- `poppler-utils` — `pdfinfo`, `pdftotext`, `pdffonts`, `pdfimages`
 - Contributors: CI also runs a real Typst build, cover, preflight and upload-package smoke test
 - Python 3.11+ (for `tomllib`)
 
