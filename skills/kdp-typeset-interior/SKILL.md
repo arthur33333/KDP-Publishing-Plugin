@@ -43,6 +43,10 @@ table_of_contents = false
 Use Typst heading markup (`= Chapter title`, `== Section title`) in the body
 source; plain bold paragraphs are not structural headings and will not appear.
 
+Page numbers remain centered in the footer. The contents page uses the actual
+page locations of headings, so its references follow the final layout after the
+build script has completed its margin and parity passes.
+
 ## Where the text lives
 
 `[paths].body` in `book.toml`. A single `.typ` file or a directory of them.
