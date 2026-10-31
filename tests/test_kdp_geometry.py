@@ -150,7 +150,7 @@ class PdfImageResolutionTests(unittest.TestCase):
     def test_parses_effective_image_ppi(self):
         output = (
             "page num type width height color comp bpc enc interp object ID "
-            "x-ppi y-ppi size ratio\\n"
+            "x-ppi y-ppi size ratio\n"
             "1 0 image 1200 1200 rgb 3 8 image no 7 0 375 375 12K 0.1%\\n"
             "1 1 smask 1200 1200 gray 1 8 image no 7 0 375 375 4K 0.1%\\n"
         )
