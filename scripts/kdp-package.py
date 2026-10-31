@@ -139,7 +139,7 @@ def main() -> int:
     else:
         listing_review.append("No common listing issues detected by the local checks.")
     (out / "listing-review.txt").write_text(
-        "\\n".join(listing_review) + "\\n", encoding="utf-8"
+        "\n".join(listing_review) + "\n", encoding="utf-8"
     )
     shutil.copy2(interior, out / f"{stem}-interior.pdf")
     (out / "description.txt").write_text(description + "\n", encoding="utf-8")
