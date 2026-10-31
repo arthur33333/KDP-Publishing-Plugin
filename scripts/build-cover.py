@@ -92,6 +92,11 @@ def main() -> int:
         print("\n--pages was given: modelled only, cover.pdf not written.")
         return 0
 
+    # Remove an older cover before a real rebuild; a failed compile must not leave
+    # a stale PDF that looks like the current cover.
+    if out.exists():
+        out.unlink()
+
     template = root / paths["cover_template"]
     if not template.is_file():
         sys.exit(f"! {template} is missing. /kdp-init copies one in.")
