@@ -34,6 +34,17 @@ import kdp_geometry as geo  # noqa: E402
 import kdp_project as proj  # noqa: E402
 
 
+def table_of_contents_enabled(cfg: dict) -> bool:
+    """Read the optional contents-page setting, defaulting to enabled."""
+    settings = cfg.get("interior", {})
+    enabled = settings.get("table_of_contents", True)
+    if not isinstance(enabled, bool):
+        raise proj.ProjectError(
+            "[interior].table_of_contents must be true or false in book.toml."
+        )
+    return enabled
+
+
 def compile_pass(cfg: dict, pages_est: int, parity: bool) -> tuple[Path, int]:
     """Compile once at margins derived from `pages_est`; return the PDF and extent."""
     root, dist = cfg["root"], cfg["dist"]
@@ -53,14 +64,8 @@ def compile_pass(cfg: dict, pages_est: int, parity: bool) -> tuple[Path, int]:
     dist.mkdir(parents=True, exist_ok=True)
     out = dist / "interior.pdf"
     book_json = proj.write_book_json(cfg)
-    # The contents page is enabled by default. Existing projects can disable it
-    # explicitly with [interior].table_of_contents = false.
-    interior_settings = cfg.get("interior", {})
-    toc_enabled = interior_settings.get("table_of_contents", True)
-    if not isinstance(toc_enabled, bool):
-        raise proj.ProjectError(
-            "[interior].table_of_contents must be true or false in book.toml."
-        )
+    # Existing projects without an [interior] section get the default contents page.
+    toc_enabled = table_of_contents_enabled(cfg)
 
     proj.typst_compile(
         src=template,
