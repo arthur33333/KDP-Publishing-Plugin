@@ -6,6 +6,7 @@ Run from the repository root with:
 
 import importlib.util
 import sys
+import tempfile
 import unittest
 from pathlib import Path
 from types import SimpleNamespace
