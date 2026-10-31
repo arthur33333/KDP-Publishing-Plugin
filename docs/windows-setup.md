@@ -38,8 +38,8 @@ and add the folder containing `typst.exe` to your user PATH.
 
 ## 3. Install Poppler for Windows
 
-The PDF checks need three Poppler commands: `pdfinfo`, `pdftotext`, and
-`pdffonts`.
+The PDF checks need four Poppler commands: `pdfinfo`, `pdftotext`, `pdffonts`,
+and `pdfimages`.
 
 1. Open the [Poppler Windows releases](https://github.com/oschwartz10612/poppler-windows/releases/latest).
 2. Download the latest ZIP asset for Windows.
@@ -48,7 +48,7 @@ The PDF checks need three Poppler commands: `pdfinfo`, `pdftotext`, and
 5. Add that exact `Library\bin` folder to your **user PATH** in Windows Environment Variables.
 6. Close and reopen PowerShell.
 
-Verify all three commands:
+Verify all four commands:
 
 ```powershell
 pdfinfo -v
@@ -72,7 +72,7 @@ pdftotext -v
 pdffonts -v
 ```
 
-All five commands must respond before running the PDF pipeline.
+All six commands must respond before running the PDF pipeline.
 
 ## 5. Run the project scripts
 
@@ -99,7 +99,7 @@ measured page count.
   full path to `python.exe`.
 - **`typst` not found:** reopen PowerShell after installation; otherwise add
   the folder containing `typst.exe` to PATH.
-- **`pdfinfo`, `pdftotext`, or `pdffonts` not found:** add Poppler's
+- **`pdfinfo`, `pdftotext`, `pdffonts`, or `pdfimages` not found:** add Poppler's
   `Library\bin` folder to PATH and reopen PowerShell.
 - **A script says `book.toml` is missing:** run it from inside the book project
   folder, or pass the project path using `--project`.
