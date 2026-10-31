@@ -17,7 +17,7 @@ class ListingAuditTests(unittest.TestCase):
         self.assertEqual(
             audit.audit_listing(
                 "A practical guide for home gardening.",
-                ["container gardening", "indoor herbs"],
+                ["container plants", "indoor herbs"],
                 ["Gardening"],
             ),
             [],
