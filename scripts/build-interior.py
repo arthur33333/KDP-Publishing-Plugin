@@ -6,20 +6,22 @@
 
 Writes `<dist>/interior.pdf`.
 
-THE INTERIOR IS RENDERED TWICE, ON PURPOSE. Printers need an even leaf count, and
-the extent is not known until the document has been laid out. So the first pass is
-compiled and counted, and if it came back odd a blank parity leaf is added and the
-whole thing is compiled again.
+THE INTERIOR IS RENDERED UNTIL ITS GEOMETRY SETTLES. Printers need an even leaf
+count, and the extent is not known until the document has been laid out. The build
+measures the first pass, corrects the gutter tier if the extent crosses a KDP
+threshold, and adds a parity leaf when needed. It stops only when the measured
+extent and the gutter tier used for the build agree.
 
 This cannot be decided inside Typst. A conditional on `counter(page).final()`
 oscillates: adding the leaf makes the count even, which makes the condition false,
 which removes the leaf. The decision has to be made by something standing outside
 the document, which is why this script exists rather than a clever template.
 
-Margins are computed from the trim and the FIRST PASS page count, because KDP's
-minimum gutter is tiered by extent — a book that crosses 300 pages needs a wider
-inside margin than the same book at 299. The second pass therefore uses margins
-derived from a real measurement rather than from an estimate.
+Margins are computed from the trim and measured page count, because KDP's minimum
+gutter is tiered by extent — a book that crosses 300 pages needs a wider inside
+margin than the same book at 299. The build repeats when the first measurement
+used the wrong tier. `--no-parity` skips only the blank leaf for proofing; it still
+rebuilds when the gutter tier is wrong.
 """
 
 from __future__ import annotations
