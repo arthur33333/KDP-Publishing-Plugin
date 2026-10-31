@@ -1,5 +1,6 @@
 """Unit tests for the standalone local KDP Publishing Studio."""
 import base64
+import json
 import sys
 import tempfile
 import unittest
