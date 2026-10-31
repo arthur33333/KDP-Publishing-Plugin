@@ -62,6 +62,17 @@ def run(cmd: list[str]) -> str:
     return result.stdout
 
 
+def cover_height_mismatch(actual_height_in: float, expected_height_in: float,
+                         tolerance: float = 0.02) -> str | None:
+    """Return a diagnostic when the cover PDF height differs from its required wrap."""
+    if abs(actual_height_in - expected_height_in) <= tolerance:
+        return None
+    return (
+        f"cover height is {actual_height_in:.4f}in but the full wrap needs "
+        f"{expected_height_in:.4f}in — check the cover template and rebuild it"
+    )
+
+
 # Running commentary goes to stderr under --json, so stdout stays a single
 # parseable document. A tool that prints prose above its JSON is a tool whose
 # output cannot be piped, which defeats the point of having a --json flag.
@@ -250,6 +261,9 @@ def main() -> int:
                 f"cover spine is {measured_spine:.4f}in but {pages} pages needs "
                 f"{dims['spine_in']:.4f}in — this cover is stale, rebuild it"
             )
+        height_error = cover_height_mismatch(ch / proj.PT, dims["wrap_in"][1])
+        if height_error:
+            failures.append(height_error)
         report["cover"] = {
             "wrap_in": [round(cw / proj.PT, 4), round(ch / proj.PT, 4)],
             "measured_spine_in": round(measured_spine, 4),
