@@ -53,7 +53,7 @@ def compile_pass(cfg: dict, pages_est: int, parity: bool) -> tuple[Path, int]:
     printing, paths = cfg["print"], cfg["paths"]
 
     trim_w, trim_h = geo.parse_trim(printing["trim"])
-    inner = geo.interior_geometry(pages_est, printing["trim"], printing["bleed"])
+    inner = geo.interior_geometry(pages_est, printing["trim"], printing["bleed"], printing["paper"])
     m = inner["margins_in"]
 
     template = root / paths["interior_template"]
